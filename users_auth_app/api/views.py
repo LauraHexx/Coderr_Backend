@@ -5,11 +5,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 
 from users_auth_app.models import UserProfile
-from .serializers import UserProfileListSerializer, UserProfileDetailSerializer
+from .serializers import UserProfileListSerializer, UserProfileDetailSerializer, RegistrationSerializer
 from .permissions import IsOwnerOrAdmin
 
 
@@ -44,3 +44,16 @@ class UserProfileListView(ListAPIView):
 
         return UserProfile.objects.filter(type=profile_type)
     
+
+
+class RegistrationView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = RegistrationSerializer(data=request.data)
+
+        if serializer.is_valid():
+            response_data = serializer.save()
+            return Response(response_data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
