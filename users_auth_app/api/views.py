@@ -12,10 +12,15 @@ from rest_framework.authtoken.models import Token
 
 from users_auth_app.models import UserProfile
 from .serializers import UserProfileListSerializer, UserProfileDetailSerializer, RegistrationSerializer
-from .permissions import IsOwnerOrAdmin
+from .permissions import ReadOnlyOrOwnerUpdateOrAdmin
 
 
 class RegistrationView(APIView):
+    """
+    API view for registering a new user.
+    Accepts POST requests with user data, validates it,
+    and creates a new user account if valid.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -33,6 +38,11 @@ class RegistrationView(APIView):
 
 
 class LoginView(ObtainAuthToken):
+    """
+    API view for authenticating users.
+    Accepts POST requests with username and password,
+    and returns an authentication token on success.
+    """
     permission_classes = [AllowAny]
 
     def post(self, request):
@@ -57,7 +67,11 @@ class LoginView(ObtainAuthToken):
 
 
 class UserProfileDetailView(APIView):
-    permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
+    """
+    API view for retrieving or partially updating a single user profile.
+    Requires authentication and proper permissions (owner or admin).
+    """
+    permission_classes = [IsAuthenticated, ReadOnlyOrOwnerUpdateOrAdmin]
 
     def get(self, request, pk):
         """
@@ -74,6 +88,7 @@ class UserProfileDetailView(APIView):
         Returns a success response with updated profile data, or errors if validation fails.
         """
         profile = get_object_or_404(UserProfile, pk=pk)
+        self.check_object_permissions(request, profile)
         serializer = UserProfileDetailSerializer(
             profile, data=request.data, partial=True)
         if serializer.is_valid():
@@ -83,6 +98,11 @@ class UserProfileDetailView(APIView):
 
 
 class UserProfileListView(ListAPIView):
+    """
+    API view for listing user profiles by type ('business' or 'customer').
+    Only accessible to authenticated users.
+    Raises 404 for invalid profile types.
+    """
     serializer_class = UserProfileListSerializer
     permission_classes = [IsAuthenticated]
 

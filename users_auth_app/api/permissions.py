@@ -1,25 +1,21 @@
 from rest_framework import permissions
 
-class IsOwnerOrAdmin(permissions.BasePermission):
 
-    def has_object_permission(self, request, view, obj):
-        if request.method in permissions.SAFE_METHODS:
-            return True
-        return obj.user == request.user or request.user.is_staff
-    
-class UserPermission(permissions.BasePermission):
+class ReadOnlyOrOwnerUpdateOrAdmin(permissions.BasePermission):
     """
-    User permission to allow:
-    - Anyone to read (GET, HEAD, OPTIONS)
-    - Owners to update (PUT, PATCH)
-    - Admins to delete (DELETE)
+    - SAFE_METHODS: everyone allowed
+    - PATCH/PUT: only owner or admin
+    - DELETE: only admin
     """
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
-        elif request.method in ['PUT', 'PATCH']:
-            return obj.author == request.user or request.user.is_staff
-        elif request.method == 'DELETE':
+
+        if request.method in ['PATCH', 'PUT']:
+            return obj.user == request.user or request.user.is_staff
+
+        if request.method == 'DELETE':
             return request.user.is_staff
+
         return False

@@ -6,12 +6,14 @@ from django.contrib.auth.models import User
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
-    file = models.ImageField(upload_to='profile_pictures/', null=True, blank=True)
+    file = models.ImageField(
+        upload_to='profile_pictures/', null=True, blank=True)
     location = models.CharField(max_length=255, null=True, blank=True)
     tel = models.CharField(max_length=20, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     working_hours = models.CharField(max_length=50, null=True, blank=True)
-    type = models.CharField(max_length=50, choices=[('business', 'Business'), ('customer', 'Customer')])
+    type = models.CharField(max_length=50, choices=[(
+        'business', 'Business'), ('customer', 'Customer')])
 
     @property
     def username(self):
@@ -30,5 +32,5 @@ class UserProfile(models.Model):
         return self.user.last_name
 
     @property
-    def date_joined(self):
+    def created_at(self):
         return self.user.date_joined

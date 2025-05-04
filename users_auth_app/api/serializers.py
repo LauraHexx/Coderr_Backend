@@ -82,8 +82,38 @@ class UserProfileListSerializer(serializers.ModelSerializer):
 
 
 class UserProfileDetailSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.EmailField(source='user.email', required=False)
+    first_name = serializers.CharField(
+        source='user.first_name', required=False)
+    last_name = serializers.CharField(source='user.last_name', required=False)
+    created_at = serializers.DateTimeField(
+        source='user.date_joined', read_only=True)
+
     class Meta:
         model = UserProfile
-        fields = ['user', 'username', 'first_name', 'last_name', 'file', 'location',
-                  'tel', 'description', 'working_hours', 'type', 'email', 'created_at']
+        fields = [
+            'user', 'username', 'first_name', 'last_name',
+            'file', 'location', 'tel', 'description',
+            'working_hours', 'type', 'email', 'created_at',
+        ]
         read_only_fields = ['user', 'username', 'type', 'created_at']
+
+    def update(self, instance, validated_data):
+        """
+        Updates UserProfile and nested User fields (e.g. first_name, email) if provided.
+        Handles partial updates by separating and applying user-related data appropriately.
+        """
+        user_data = validated_data.pop('user', {})
+
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if user_data:
+            user = instance.user
+            for attr, value in user_data.items():
+                setattr(user, attr, value)
+            user.save()
+
+        return instance

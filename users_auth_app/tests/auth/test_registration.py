@@ -15,6 +15,11 @@ from users_auth_app.models import UserProfile
 
 
 class RegistrationTests(APITestCase):
+    """
+    Test suite for the user registration endpoint. This suite includes tests for 
+    successful registration, as well as different failure scenarios such as missing 
+    required fields, password mismatch, invalid email format, and duplicate username or email.
+    """
 
     def setUp(self):
         """Sets up the registration endpoint URL before each test."""
