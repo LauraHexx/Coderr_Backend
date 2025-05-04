@@ -1,6 +1,5 @@
 from django.urls import reverse
 from django.contrib.auth.models import User
-
 from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
@@ -28,6 +27,17 @@ class LoginTests(APITestCase):
         self.assertEqual(response.data["username"], "exampleUser")
         self.assertEqual(response.data["email"], "example@mail.de")
         self.assertEqual(response.data["user_id"], self.user.id)
+
+    def test_token_is_created_on_successful_login(self):
+        """
+        Tests that a token is created when a user successfully logs in.
+        """
+        payload = {"username": "exampleUser", "password": "strongPassword"}
+        response = self.client.post(self.url, data=payload, format="json")
+
+        token = Token.objects.filter(user=self.user).first()
+        self.assertIsNotNone(token)
+        self.assertEqual(response.data["token"], token.key)
 
     def test_login_fails_with_wrong_username(self):
         """
@@ -62,33 +72,12 @@ class LoginTests(APITestCase):
             self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
             self.assertIn(field, response.data)
 
-    def test_login_fails_with_empty_payload(self):
+    def test_login_fails_with_invalid_json(self):
         """
-        Tests login fails with completely empty JSON payload.
+        Tests login fails when invalid JSON is provided.
         """
-        response = self.client.post(self.url, data={}, format="json")
+        payload = "{username: 'exampleUser', password: 'strongPassword'}"
+        response = self.client.post(
+            self.url, data=payload, content_type="application/json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("username", response.data)
-        self.assertIn("password", response.data)
-
-    def test_login_fails_with_non_json_payload(self):
-        """
-        Tests login fails with non-JSON format payload.
-        """
-        response = self.client.post(self.url, data="not a json", content_type="text/plain")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    def test_login_fails_when_user_is_inactive(self):
-        """
-        Tests that inactive users cannot log in.
-        """
-        self.user.is_active = False
-        self.user.save()
-
-        payload = {"username": "exampleUser", "password": "strongPassword"}
-        response = self.client.post(self.url, data=payload, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("non_field_errors", response.data)

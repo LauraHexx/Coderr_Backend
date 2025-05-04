@@ -4,19 +4,17 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 
-from users_auth_app.models import UserProfile 
+from users_auth_app.models import UserProfile
 
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.contrib.auth.models import User
 from rest_framework.authtoken.models import Token
 from django.urls import reverse
-from users_auth_app.models import UserProfile 
-
+from users_auth_app.models import UserProfile
 
 
 class RegistrationTests(APITestCase):
-    """Test suite for user registration."""
 
     def setUp(self):
         """Sets up the registration endpoint URL before each test."""
@@ -29,6 +27,10 @@ class RegistrationTests(APITestCase):
 
         self._assert_success_response(response)
         self._assert_user_created_correctly(payload)
+
+        # Assert that the token was created and is not None
+        token = Token.objects.get(user__username=payload["username"])
+        self.assertIsNotNone(token.key)  # Ensure the token is not None
 
     def _valid_payload(self):
         """Returns a valid payload for user registration."""
@@ -56,7 +58,8 @@ class RegistrationTests(APITestCase):
 
     def test_registration_fails_when_required_fields_missing(self):
         """Tests registration failure when required fields are missing."""
-        required_fields = ['username', 'email', 'password', 'repeated_password', 'type']
+        required_fields = ['username', 'email',
+                           'password', 'repeated_password', 'type']
         for field in required_fields:
             payload = {f: "test" for f in required_fields if f != field}
             response = self.client.post(self.url, data=payload, format='json')
@@ -103,4 +106,46 @@ class RegistrationTests(APITestCase):
         response = self.client.post(self.url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", response.data)
-        self.assertFalse(User.objects.filter(username=payload["username"]).exists())
+        self.assertFalse(User.objects.filter(
+            username=payload["username"]).exists())
+
+    def test_registration_fails_with_duplicate_email(self):
+        """Tests registration fails when the email is already used by another user."""
+        payload = self._valid_payload()
+        self.client.post(self.url, data=payload,
+                         format='json')  # First registration
+
+        # Try to register again with same email, but different username
+        payload["username"] = "AnotherUser"
+        response = self.client.post(self.url, data=payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", response.data)
+        self.assertEqual(User.objects.filter(
+            email=payload["email"]).count(), 1)
+
+    def test_registration_fails_with_duplicate_username(self):
+        """Tests registration fails when the username is already taken."""
+        payload = self._valid_payload()
+        self.client.post(self.url, data=payload,
+                         format='json')  # First registration
+
+        # Try to register again with same username, but different email
+        payload["email"] = "another@example.com"
+        response = self.client.post(self.url, data=payload, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", response.data)
+        self.assertEqual(User.objects.filter(
+            username=payload["username"]).count(), 1)
+
+    def test_registration_fails_with_invalid_json(self):
+        """
+        Tests registration fails when invalid JSON is provided.
+        """
+        payload = "{username: 'exampleUser', password: 'strongPassword'}"
+        response = self.client.post(
+            self.url, data=payload, content_type="application/json"
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('detail', response.data)
