@@ -3,6 +3,7 @@ from django.http import Http404
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -11,7 +12,7 @@ from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 
 from users_auth_app.models import UserProfile
-from .serializers import UserProfileListSerializer, UserProfileDetailSerializer, RegistrationSerializer
+from .serializers import RegistrationSerializer, UserProfileDetailSerializer, BusinessUserProfileSerializer, CustomerUserProfileSerializer
 from .permissions import ReadOnlyOrOwnerUpdateOrAdmin
 
 
@@ -101,19 +102,27 @@ class UserProfileListView(ListAPIView):
     """
     API view for listing user profiles by type ('business' or 'customer').
     Only accessible to authenticated users.
-    Raises 404 for invalid profile types.
+    Raises 400 for invalid profile types.
     """
-    serializer_class = UserProfileListSerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         """
         Retrieves a list of user profiles filtered by profile type ('business' or 'customer').
-        Raises a 404 error if an invalid profile type is provided.
+        Raises a 400 error if an invalid profile type is provided.
         """
-        profile_type = self.kwargs['type']
-
+        profile_type = self.kwargs.get('type')
         if profile_type not in ['business', 'customer']:
-            raise Http404
-
+            raise ValidationError({"detail": "Invalid profile type"})
         return UserProfile.objects.filter(type=profile_type)
+
+    def get_serializer_class(self):
+        """
+        Returns the appropriate serializer class based on the profile type.
+        """
+        profile_type = self.kwargs.get('type')
+        if profile_type == 'business':
+            return BusinessUserProfileSerializer
+        elif profile_type == 'customer':
+            return CustomerUserProfileSerializer
+        raise ValidationError({"detail": "Invalid profile type"})

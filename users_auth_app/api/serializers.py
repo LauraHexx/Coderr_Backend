@@ -74,13 +74,6 @@ class RegistrationSerializer(serializers.Serializer):
         }
 
 
-class UserProfileListSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = UserProfile
-        fields = ['user', 'username', 'first_name', 'last_name', 'file', 'location',
-                  'tel', 'description', 'working_hours', 'type', 'email', 'created_at']
-
-
 class UserProfileDetailSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', required=False)
@@ -105,7 +98,6 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
         Handles partial updates by separating and applying user-related data appropriately.
         """
         user_data = validated_data.pop('user', {})
-
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
@@ -117,3 +109,17 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
             user.save()
 
         return instance
+
+
+class BusinessUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'username', 'first_name', 'last_name', 'file', 'location',
+                  'tel', 'description', 'working_hours', 'type']
+
+
+class CustomerUserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = ['user', 'username', 'first_name', 'last_name', 'file',
+                  'tel', 'description', 'type']
