@@ -137,7 +137,7 @@ class ProfileDetailTests(APITestCase):
         self._assert_patch_success(response, updated_data)
 
     def test_patch_profile_readonly_fields_ignored(self):
-        """Ensures read-only fields like 'user' or 'created_at' cannot be overwritten."""
+        """Ensures read-only fields 'user', 'username', 'type', 'created_at' cannot be overwritten."""
         self._authenticate()
         original_profile = self._get_profile_object()
 
