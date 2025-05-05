@@ -1,13 +1,10 @@
-# tests/users/test_profile_list_views.py
 
 from rest_framework.authtoken.models import Token
 from rest_framework import status
 from rest_framework.test import APITestCase
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import User
 from django.urls import reverse
 from users_auth_app.models import UserProfile
-
-User = get_user_model()
 
 
 class ProfileListViewTests(APITestCase):
@@ -18,9 +15,9 @@ class ProfileListViewTests(APITestCase):
 
     def setUp(self):
         """Sets up users and their profiles for business and customer types."""
-        self.business_user = self._create_user(
+        self.business_user, self.business_token = self._create_user(
             'max_business', 'max@business.com', 'Max', 'Mustermann', 'business')
-        self.customer_user = self._create_user(
+        self.customer_user, self.customer_token = self._create_user(
             'customer_jane', 'jane@customer.com', 'Jane', 'Doe', 'customer')
 
     def _create_user(self, username, email, first_name, last_name, user_type):
