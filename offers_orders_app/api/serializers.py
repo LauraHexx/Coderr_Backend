@@ -63,10 +63,23 @@ class OfferSerializer(serializers.ModelSerializer):
                             'created_at', 'updated_at', 'user_details']
 
     def validate_details(self, value):
-        """Ensures that at least 3 offer details are provided."""
+        """
+        Ensures that at least 3 offer details are provided and
+        exactly one of each offer_type ('basic', 'standard', 'premium') exists.
+        """
         if len(value) < 3:
             raise serializers.ValidationError(
-                "At least 3 offer details are required.")
+                "At least 3 offer details are required."
+            )
+
+        offer_types = [detail.get("offer_type") for detail in value]
+        required_types = {"basic", "standard", "premium"}
+
+        if set(offer_types) != required_types:
+            raise serializers.ValidationError(
+                "Exactly one of each offer_type ('basic', 'standard', 'premium') is required."
+            )
+
         return value
 
     def create(self, validated_data):

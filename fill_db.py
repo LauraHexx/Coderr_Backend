@@ -1,5 +1,7 @@
 from rest_framework.authtoken.models import Token
+
 from users_auth_app.models import User, UserProfile
+from offers_orders_app.models import Offer, OfferDetail
 
 User.objects.all().delete()
 UserProfile.objects.all().delete()
@@ -168,3 +170,89 @@ UserProfile.objects.create(
     user=user17, type='customer'
 )
 Token.objects.create(user=user17)
+
+
+offers_data = [
+    {
+        "title": "Graphic Design Package",
+        "description": "A complete graphic design package for businesses.",
+        "details": [
+            {
+                "title": "Basic Design",
+                "revisions": 2,
+                "delivery_time_in_days": 5,
+                "price": 100,
+                "features": ["Logo Design", "Business Card"],
+                "offer_type": "basic"
+            },
+            {
+                "title": "Standard Design",
+                "revisions": 5,
+                "delivery_time_in_days": 7,
+                "price": 200,
+                "features": ["Logo Design", "Business Card", "Letterhead"],
+                "offer_type": "standard"
+            },
+            {
+                "title": "Premium Design",
+                "revisions": 10,
+                "delivery_time_in_days": 10,
+                "price": 500,
+                "features": ["Logo Design", "Business Card", "Letterhead", "Flyer"],
+                "offer_type": "premium"
+            }
+        ]
+    },
+    {
+        "title": "Social Media Branding",
+        "description": "Custom branding assets for all major social platforms.",
+        "details": [
+            {
+                "title": "Basic Branding",
+                "revisions": 2,
+                "delivery_time_in_days": 4,
+                "price": 80,
+                "features": ["Profile Picture", "Cover Photo"],
+                "offer_type": "basic"
+            },
+            {
+                "title": "Standard Branding",
+                "revisions": 4,
+                "delivery_time_in_days": 6,
+                "price": 160,
+                "features": ["Profile Picture", "Cover Photo", "Post Template"],
+                "offer_type": "standard"
+            },
+            {
+                "title": "Premium Branding",
+                "revisions": 6,
+                "delivery_time_in_days": 8,
+                "price": 320,
+                "features": ["Profile Picture", "Cover Photo", "Post Template", "Story Template"],
+                "offer_type": "premium"
+            }
+        ]
+    }
+]
+
+# Select all business users
+business_users = UserProfile.objects.filter(type="business")
+
+# Create offers and their details for each business user
+for profile in business_users:
+    for offer_data in offers_data:
+        offer = Offer.objects.create(
+            user=profile.user,
+            title=offer_data["title"],
+            description=offer_data["description"]
+        )
+        for detail in offer_data["details"]:
+            OfferDetail.objects.create(
+                offer=offer,
+                title=detail["title"],
+                offer_type=detail["offer_type"],
+                revisions=detail["revisions"],
+                delivery_time_in_days=detail["delivery_time_in_days"],
+                price=detail["price"],
+                features=detail["features"]
+            )
