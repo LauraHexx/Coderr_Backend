@@ -8,12 +8,17 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     file = models.ImageField(
         upload_to='profile_pictures/', null=True, blank=True)
-    location = models.CharField(max_length=255, null=True, blank=True)
-    tel = models.CharField(max_length=20, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
-    working_hours = models.CharField(max_length=50, null=True, blank=True)
-    type = models.CharField(max_length=50, choices=[(
-        'business', 'Business'), ('customer', 'Customer')])
+    location = models.CharField(
+        max_length=255, null=False, blank=True, default='Nicht angegeben')
+    tel = models.CharField(max_length=20, null=False,
+                           blank=True, default='Nicht angegeben')
+    description = models.TextField(
+        null=False, blank=True, default='Nicht angegeben')
+    working_hours = models.CharField(
+        max_length=50, null=False, blank=True, default='Nicht angegeben')
+    type = models.CharField(
+        max_length=50, choices=[('business', 'Business'), ('customer', 'Customer')]
+    )
 
     @property
     def username(self):

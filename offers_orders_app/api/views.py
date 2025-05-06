@@ -1,6 +1,7 @@
 from rest_framework import viewsets, generics, filters
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
+from django.utils import timezone
 
 from ..models import Offer, OfferDetail
 from .serializers import OfferSerializer, OfferDetailFullSerializer
@@ -39,6 +40,14 @@ class OfferViewSet(viewsets.ModelViewSet):
         Assigns the current user as creator of the offer.
         """
         serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        """
+        Assigns the current user as creator of the offer
+        and updates the `updated_at` field.
+        """
+        # Update `updated_at` only during updates
+        serializer.save(updated_at=timezone.now())
 
 
 class OfferDetailsRetrieveAPIView(generics.RetrieveAPIView):

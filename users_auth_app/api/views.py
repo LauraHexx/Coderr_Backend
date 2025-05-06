@@ -79,7 +79,7 @@ class UserProfileDetailView(APIView):
         Retrieves the user profile details for a given profile ID.
         Returns a success response with profile data or a 404 error if not found.
         """
-        profile = get_object_or_404(UserProfile, pk=pk)
+        profile = get_object_or_404(UserProfile, user_id=pk)
         serializer = UserProfileDetailSerializer(profile)
         return Response(serializer.data)
 
@@ -88,7 +88,7 @@ class UserProfileDetailView(APIView):
         Updates a user profile with the provided data for a given profile ID.
         Returns a success response with updated profile data, or errors if validation fails.
         """
-        profile = get_object_or_404(UserProfile, pk=pk)
+        profile = get_object_or_404(UserProfile, user_id=pk)
         self.check_object_permissions(request, profile)
         serializer = UserProfileDetailSerializer(
             profile, data=request.data, partial=True)

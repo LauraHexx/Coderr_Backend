@@ -8,5 +8,5 @@ router.register(r'offers', OfferViewSet, basename='offer')
 urlpatterns = [
     path('', include(router.urls)),
     path('offerdetails/<int:pk>/', OfferDetailsRetrieveAPIView.as_view(),
-         name='offerdetails-details'),
+         name='offer-details'),
 ]

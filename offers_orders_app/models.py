@@ -12,10 +12,11 @@ class Offer(models.Model):
         User, on_delete=models.CASCADE, related_name="offers"
     )
     title = models.CharField(max_length=255)
-    image = models.ImageField(upload_to="offer_images/", null=True, blank=True)
+    image = models.ImageField(
+        upload_to='offer_pictures/', null=True, blank=True)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.title} ({self.user.username})"

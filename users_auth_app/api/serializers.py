@@ -32,7 +32,7 @@ class RegistrationSerializer(serializers.Serializer):
         """Create and return a new user with a profile and token."""
         user = self._create_user(validated_data)
         self._set_user_names(user, validated_data['username'])
-        user_profile = self._create_user_profile(user, validated_data)
+        self._create_user_profile(user, validated_data)
         token = self._create_token(user)
 
         return self._build_response(user, token)
@@ -55,10 +55,16 @@ class RegistrationSerializer(serializers.Serializer):
 
     def _create_user_profile(self, user, validated_data):
         """Create a user profile instance."""
-        return UserProfile.objects.create(
-            user=user,
-            type=validated_data['type']
-        )
+        try:
+            user_profile = UserProfile.objects.create(
+                user=user,
+                type=validated_data['type']
+            )
+            print(f"User profile created for user: {user.username}")
+            return user_profile
+        except Exception as e:
+            print(f"Error creating user profile for {user.username}: {e}")
+            raise
 
     def _create_token(self, user):
         """Create a token for the user."""

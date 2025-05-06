@@ -7,12 +7,13 @@ from ..models import Offer
 
 
 class OfferFilter(FilterSet):
+    creator_id = NumberFilter(field_name='user__id')
     min_price = NumberFilter(method='filter_min_price')
     max_delivery_time = NumberFilter(method='filter_max_delivery_time')
 
     class Meta:
         model = Offer
-        fields = ['user']  # Filters by the creator user (creator_id)
+        fields = ['creator_id', 'min_price', 'max_delivery_time']
 
     def filter_min_price(self, queryset, name, value):
         """

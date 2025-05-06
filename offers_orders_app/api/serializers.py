@@ -17,10 +17,13 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class OfferDetailSerializer(serializers.HyperlinkedModelSerializer):
     """Serializer for offer detail objects."""
 
+    url = serializers.HyperlinkedIdentityField(
+        view_name='offer-details')
+
     class Meta:
         model = OfferDetail
         fields = ['id', 'url']  # Only id and url for GET requests
-        view_name = 'offerdetails-detail'
+        view_name = 'offer-details'
 
     def to_representation(self, instance):
         """Customizes the output to show full details when GET is performed."""
@@ -47,8 +50,8 @@ class OfferDetailSerializer(serializers.HyperlinkedModelSerializer):
 
 class OfferSerializer(serializers.ModelSerializer):
     """Serializer für das Offer-Model."""
-    user_details = UserDetailsSerializer(source="user")
-    details = OfferDetailSerializer(many=True)
+    user_details = UserDetailsSerializer(source="user", read_only=True)
+    details = OfferDetailSerializer(many=True)  # ← nicht mehr read_only!
     min_price = serializers.SerializerMethodField()
     min_delivery_time = serializers.SerializerMethodField()
 
@@ -56,7 +59,23 @@ class OfferSerializer(serializers.ModelSerializer):
         model = Offer
         fields = ['id', 'user', 'title', 'image', 'description', 'created_at',
                   'updated_at', 'details', 'min_price', 'min_delivery_time', 'user_details']
-        read_only_fields = ['id', 'created_at', 'updated_at', 'user_details']
+        read_only_fields = ['id', 'user',
+                            'created_at', 'updated_at', 'user_details']
+
+    def validate_details(self, value):
+        """Ensures that at least 3 offer details are provided."""
+        if len(value) < 3:
+            raise serializers.ValidationError(
+                "At least 3 offer details are required.")
+        return value
+
+    def create(self, validated_data):
+        """Creates an offer and its associated details."""
+        details_data = validated_data.pop('details')
+        offer = Offer.objects.create(**validated_data)
+        for detail in details_data:
+            OfferDetail.objects.create(offer=offer, **detail)
+        return offer
 
     def get_min_price(self, obj):
         """Calculates the minimum price of the associated offer details."""
