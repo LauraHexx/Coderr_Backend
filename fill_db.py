@@ -5,6 +5,8 @@ from offers_orders_app.models import Offer, OfferDetail
 
 User.objects.all().delete()
 UserProfile.objects.all().delete()
+Offer.objects.all().delete()
+OfferDetail.objects.all().delete()
 
 # Erstellen der Business-Nutzer:innen
 user1, _ = User.objects.get_or_create(

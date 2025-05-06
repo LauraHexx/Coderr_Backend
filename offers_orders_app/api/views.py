@@ -43,8 +43,7 @@ class OfferViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         """
-        Assigns the current user as creator of the offer
-        and updates the `updated_at` field.
+        Updates the `updated_at` field.
         """
         # Update `updated_at` only during updates
         serializer.save(updated_at=timezone.now())

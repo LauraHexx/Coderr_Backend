@@ -16,7 +16,7 @@ class Offer(models.Model):
         upload_to='offer_pictures/', null=True, blank=True)
     description = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return f"{self.title} ({self.user.username})"
