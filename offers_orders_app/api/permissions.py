@@ -8,7 +8,9 @@ class IsBusinessUser(BasePermission):
     """
 
     def has_permission(self, request, view):
-        return request.user.type == 'business'
+        user = request.user
+        profile = getattr(user, "userprofile", None)
+        return profile is not None and profile.type == "business"
 
 
 class IsOfferCreator(BasePermission):

@@ -24,6 +24,13 @@ class Offer(models.Model):
 
 class OfferDetail(models.Model):
     """Model for offer details."""
+
+    OFFER_TYPE_CHOICES = [
+        ('basic', 'Basic'),
+        ('standard', 'Standard'),
+        ('premium', 'Premium'),
+    ]
+
     offer = models.ForeignKey(
         Offer, related_name="details", on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
@@ -31,8 +38,7 @@ class OfferDetail(models.Model):
     delivery_time_in_days = models.IntegerField()
     price = models.FloatField()
     features = models.JSONField()
-    offer_type = models.CharField(max_length=50, choices=[(
-        'basic', 'Basic'), ('standard', 'Standard'), ('premium', 'Premium')])
+    offer_type = models.CharField(max_length=50, choices=OFFER_TYPE_CHOICES)
 
     def __str__(self):
         return self.title

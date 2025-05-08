@@ -1,10 +1,11 @@
+from django.db.models import Min
 from rest_framework import viewsets, generics, filters
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
 from ..models import Offer, OfferDetail
-from .serializers import OfferSerializer, OfferDetailFullSerializer
+from .serializers import OfferDetailSerializer, OfferRetrieveSerializer, OfferListSerializer, OfferEditSerializer
 from .permissions import IsBusinessUser, IsOfferCreator
 from .filters import OfferFilter
 from .pagination import OfferPagination
@@ -14,10 +15,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     """
     Handles all CRUD operations for offers with custom filtering, ordering and permissions.
     """
-    queryset = Offer.objects.all()
-    serializer_class = OfferSerializer
-    permission_classes = [AllowAny]
-    # permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly]
     filter_backends = [DjangoFilterBackend,
                        filters.OrderingFilter, filters.SearchFilter]
     filterset_class = OfferFilter
@@ -25,15 +23,30 @@ class OfferViewSet(viewsets.ModelViewSet):
     search_fields = ['title', 'description']
     pagination_class = OfferPagination
 
-    # def get_permissions(self):
-    #    """
-    #    Returns custom permissions based on the action type.
-    #    """
-    #    if self.action == 'create':
-    #        return [IsAuthenticated(), IsBusinessUser()]
-    #    if self.action in ['update', 'partial_update', 'destroy']:
-    #        return [IsAuthenticated(), IsOfferCreator()]
-    #    return [IsAuthenticatedOrReadOnly()]
+    def get_permissions(self):
+        """
+        Returns custom permissions based on the action type.
+        """
+        if self.action == 'create':
+            return [IsAuthenticated(), IsBusinessUser()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [IsAuthenticated(), IsOfferCreator()]
+        return [IsAuthenticatedOrReadOnly()]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            return OfferListSerializer
+        if self.action == 'retrieve':
+            return OfferRetrieveSerializer
+        return OfferEditSerializer
+
+    def get_queryset(self):
+        """
+        Annotates offers with `min_price` and sorts them for pagination stability.
+        """
+        return Offer.objects.annotate(
+            min_price=Min('details__price')
+        ).order_by('min_price')
 
     def perform_create(self, serializer):
         """
@@ -54,5 +67,5 @@ class OfferDetailsRetrieveAPIView(generics.RetrieveAPIView):
     Read-only view for a single offer detail object.
     """
     queryset = OfferDetail.objects.all()
-    serializer_class = OfferDetailFullSerializer
-    permission_classes = [AllowAny]
+    serializer_class = OfferDetailSerializer
+    permission_classes = [IsAuthenticated]

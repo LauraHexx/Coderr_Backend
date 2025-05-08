@@ -1,0 +1,101 @@
+
+class OfferTestHelper:
+    """
+    Helper class for reusable assertion methods in offer tests.
+    """
+
+    @staticmethod
+    def check_offer_fields(testcase, offers):
+        """
+        Asserts required fields are present in each offer.
+        """
+        expected_fields = {
+            "id", "user", "title", "image", "description",
+            "created_at", "updated_at", "details",
+            "min_price", "min_delivery_time", "user_details"
+        }
+        for offer in offers:
+            testcase.assertTrue(expected_fields.issubset(set(offer.keys())))
+            OfferTestHelper.check_offer_details(testcase, offer)
+            OfferTestHelper.check_user_details(testcase, offer)
+
+    @staticmethod
+    def check_offer_details(testcase, offer):
+        """
+        Asserts required fields in offer details.
+        """
+        testcase.assertIn("details", offer)
+        testcase.assertGreater(len(offer["details"]), 0)
+        for detail in offer["details"]:
+            testcase.assertIn("id", detail)
+            testcase.assertIn("url", detail)
+
+    @staticmethod
+    def check_user_details(testcase, offer):
+        """
+        Asserts required fields in user_details field.
+        """
+        testcase.assertIn("user_details", offer)
+        for key in ["first_name", "last_name", "username"]:
+            testcase.assertIn(key, offer["user_details"])
+
+    @staticmethod
+    def check_data_types(testcase, offers):
+        """
+        Asserts correct data types in offers list.
+        """
+        for offer in offers:
+            testcase.assertIsInstance(offer["id"], int)
+            testcase.assertIsInstance(offer["user"], int)
+            testcase.assertIsInstance(offer["title"], str)
+            testcase.assertTrue(
+                offer["image"] is None or isinstance(offer["image"], str))
+            testcase.assertIsInstance(offer["description"], str)
+            testcase.assertIsInstance(offer["created_at"], str)
+            testcase.assertIsInstance(offer["updated_at"], str)
+            testcase.assertIsInstance(offer["min_price"], (int, float))
+            testcase.assertIsInstance(offer["min_delivery_time"], int)
+            testcase.assertIsInstance(offer["details"], list)
+            testcase.assertIsInstance(offer["user_details"], dict)
+            OfferTestHelper.check_detail_data_types(testcase, offer["details"])
+
+    @staticmethod
+    def check_detail_data_types(testcase, details):
+        """
+        Asserts correct data types in offer details.
+        """
+        for detail in details:
+            testcase.assertIsInstance(detail["id"], int)
+            testcase.assertIsInstance(detail["url"], str)
+
+    @staticmethod
+    def check_single_offer_fields(testcase, offer):
+        """
+        Asserts expected fields for a single offer.
+        """
+        expected_fields = {
+            "id", "user", "title", "image", "description",
+            "created_at", "updated_at", "details",
+            "min_price", "min_delivery_time"
+        }
+        testcase.assertTrue(expected_fields.issubset(set(offer.keys())))
+        testcase.assertNotIn("user_details", offer)
+        OfferTestHelper.check_offer_details(testcase, offer)
+
+    @staticmethod
+    def check_single_offer_data_types(testcase, offer):
+        """
+        Asserts correct data types for a single offer object.
+        """
+        testcase.assertIsInstance(offer["id"], int)
+        testcase.assertIsInstance(offer["user"], int)
+        testcase.assertIsInstance(offer["title"], str)
+        testcase.assertTrue(
+            offer["image"] is None or isinstance(offer["image"], str))
+        testcase.assertIsInstance(offer["description"], str)
+        testcase.assertIsInstance(offer["created_at"], str)
+        testcase.assertIsInstance(offer["updated_at"], str)
+        testcase.assertIsInstance(offer["min_price"], (int, float))
+        testcase.assertIsInstance(offer["min_delivery_time"], int)
+        testcase.assertIsInstance(offer["details"], list)
+        OfferTestHelper.check_detail_data_types(testcase, offer["details"])

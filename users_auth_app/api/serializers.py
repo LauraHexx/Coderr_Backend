@@ -60,7 +60,6 @@ class RegistrationSerializer(serializers.Serializer):
                 user=user,
                 type=validated_data['type']
             )
-            print(f"User profile created for user: {user.username}")
             return user_profile
         except Exception as e:
             print(f"Error creating user profile for {user.username}: {e}")

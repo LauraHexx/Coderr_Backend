@@ -9,13 +9,13 @@ class UserProfile(models.Model):
     file = models.ImageField(
         upload_to='profile_pictures/', null=True, blank=True)
     location = models.CharField(
-        max_length=255, null=False, blank=True, default='Nicht angegeben')
+        max_length=255, null=False, blank=True, default='-')
     tel = models.CharField(max_length=20, null=False,
-                           blank=True, default='Nicht angegeben')
+                           blank=True, default='-')
     description = models.TextField(
-        null=False, blank=True, default='Nicht angegeben')
+        null=False, blank=True, default='-')
     working_hours = models.CharField(
-        max_length=50, null=False, blank=True, default='Nicht angegeben')
+        max_length=50, null=False, blank=True, default='-')
     type = models.CharField(
         max_length=50, choices=[('business', 'Business'), ('customer', 'Customer')]
     )
