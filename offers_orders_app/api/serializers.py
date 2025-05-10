@@ -19,6 +19,8 @@ class UserDetailsSerializer(serializers.ModelSerializer):
 class OfferDetailSerializer(serializers.ModelSerializer):
     """Serializer for offer detail objects."""
 
+    id = serializers.IntegerField()
+
     class Meta:
         model = OfferDetail
         fields = ['id', 'title', 'revisions',
@@ -75,7 +77,7 @@ class OfferRetrieveSerializer(OfferListSerializer, serializers.ModelSerializer):
 
 class OfferEditSerializer(serializers.ModelSerializer):
     """Serializer für das Offer-Model."""
-    details = OfferDetailSerializer(many=True)
+    details = OfferDetailSerializer(many=True, required=False)
 
     class Meta:
         model = Offer
@@ -84,16 +86,22 @@ class OfferEditSerializer(serializers.ModelSerializer):
 
     def validate_details(self, value):
         """
-        Validates that all required offer types ('basic', 'standard', 'premium') are included.
+        Validates that if 'details' is provided, it must contain at least one valid entry.
         """
-        required_types = dict(OfferDetail.OFFER_TYPE_CHOICES).keys()
-        offer_types = [detail.get("offer_type") for detail in value]
-
-        missing_types = set(required_types) - set(offer_types)
-        if missing_types:
+        if value is not None and len(value) == 0:
             raise serializers.ValidationError(
-                f"At least. Missing offer types ({len(missing_types)}): {', '.join(missing_types)}"
+                "If 'details' is provided, it must not be empty."
             )
+
+        valid_types = dict(OfferDetail.OFFER_TYPE_CHOICES).keys()
+        offer_types = [detail.get("offer_type") for detail in value or []]
+
+        invalid_types = set(offer_types) - set(valid_types)
+        if invalid_types:
+            raise serializers.ValidationError(
+                f"Invalid offer types: {', '.join(invalid_types)}"
+            )
+
         return value
 
     def create(self, validated_data):
@@ -103,3 +111,39 @@ class OfferEditSerializer(serializers.ModelSerializer):
         for detail in details:
             OfferDetail.objects.create(offer=offer, **detail)
         return offer
+
+    def update(self, instance, validated_data):
+        """
+        Updates an offer and its existing offer details.
+        New details are not allowed. Only existing ones with an ID will be updated.
+        """
+        details_data = validated_data.pop('details', None)
+
+        # Update Offer-Felder
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        if details_data is not None:
+            existing_details = {
+                detail.id: detail for detail in instance.details.all()}
+
+            for detail_data in details_data:
+                print(detail_data)
+                detail_id = detail_data.get('id')
+                if not detail_id:
+                    raise serializers.ValidationError(
+                        "Each detail must include its 'id' for updates.")
+
+                if detail_id not in existing_details:
+                    raise serializers.ValidationError(
+                        f"Detail with id {detail_id} not found for this offer.")
+
+                detail_instance = existing_details[detail_id]
+                for attr, value in detail_data.items():
+                    if attr in ("offer_type", "id"):
+                        continue  # offer_type darf nicht verändert werden
+                    setattr(detail_instance, attr, value)
+                detail_instance.save()
+
+        return instance

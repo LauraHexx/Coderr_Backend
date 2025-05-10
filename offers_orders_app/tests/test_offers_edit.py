@@ -1,4 +1,5 @@
-from .test_helpers import OfferTestHelper
+from .test_offers_helpers import OfferTestHelper
+from ..models import Offer, OfferDetail
 from users_auth_app.models import User, UserProfile
 from rest_framework.authtoken.models import Token
 from django.urls import reverse
@@ -32,7 +33,7 @@ class OfferCreateTests(APITestCase):
     def test_create_offer_fails_with_less_than_three_details(self):
         """Test that offer creation fails if less than 3 details are provided."""
         payload = self._valid_payload()
-        payload["details"] = payload["details"][:2]  # Nur 2 Details
+        payload["details"] = payload["details"][:2]
 
         response = self.client.post(self.url, data=payload, format='json')
 
@@ -40,7 +41,7 @@ class OfferCreateTests(APITestCase):
 
     def test_create_offer_fails_without_token(self):
         """Test that unauthenticated request returns 401."""
-        self.client.credentials()  # Token entfernen
+        self.client.credentials()
         payload = self._valid_payload()
 
         response = self.client.post(self.url, data=payload, format='json')
@@ -118,3 +119,152 @@ class OfferCreateTests(APITestCase):
                 returned_detail["features"], expected_detail["features"])
             self.assertEqual(
                 returned_detail["offer_type"], expected_detail["offer_type"])
+
+
+class OfferPatchTests(APITestCase):
+    """
+    Test suite for PATCH /offers/<id>/ endpoint with authentication,
+    permissions, field structure and error handling.
+    """
+
+    def setUp(self):
+        """
+        Sets up test users, token, and a sample offer with details.
+        """
+        self.user = User.objects.create_user(username='john', password='pass')
+        self.other_user = User.objects.create_user(
+            username='hacker', password='pass')
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+        self.offer = Offer.objects.create(
+            user=self.user,
+            title="Grafikdesign-Paket",
+            description="Originalbeschreibung"
+        )
+
+        self.detail_basic = OfferDetail.objects.create(
+            offer=self.offer,
+            title="Basic Design",
+            revisions=2,
+            delivery_time_in_days=5,
+            price=100.0,
+            features=["Logo"],
+            offer_type="basic"
+        )
+        self.detail_standard = OfferDetail.objects.create(
+            offer=self.offer,
+            title="Standard Design",
+            revisions=5,
+            delivery_time_in_days=10,
+            price=120.0,
+            features=["Logo Design", "Visitenkarte", "Briefpapier"],
+            offer_type="standard"
+        )
+        self.detail_premium = OfferDetail.objects.create(
+            offer=self.offer,
+            title="Premium Design",
+            revisions=10,
+            delivery_time_in_days=10,
+            price=150.0,
+            features=["Logo Design", "Visitenkarte", "Briefpapier", "Flyer"],
+            offer_type="premium"
+        )
+
+        self.url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
+
+    def test_successful_patch(self):
+        """
+        Tests successful update of an offer with valid data and token.
+        """
+        payload = {
+            "title": "Updated Grafikdesign-Paket",
+            "description": "Ein umfassendes Grafikdesign-Paket für Unternehmen.",
+            "details": [
+                {
+                    "id": self.detail_basic.id,
+                    "title": "Basic Design Updated",
+                    "revisions": 3,
+                    "delivery_time_in_days": 6,
+                    "price": 120,
+                    "features": ["Logo Design", "Flyer"],
+                    "offer_type": "basic"
+                }
+            ]
+        }
+
+        response = self.client.patch(self.url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_detail_id_immutability(self):
+        """
+        Ensures that invalid or spoofed OfferDetail IDs are rejected.
+        """
+        manipulated_id = 99999
+
+        payload = {
+            "details": [
+                {
+                    "id": manipulated_id,
+                    "title": "Illegal Detail",
+                    "revisions": 1,
+                    "delivery_time_in_days": 3,
+                    "price": 50,
+                    "features": ["Fake Feature"],
+                    "offer_type": "basic"
+                }
+            ]
+        }
+
+        response = self.client.patch(self.url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_patch_with_invalid_data_returns_400(self):
+        """
+        Sends incomplete/invalid data and expects HTTP 400.
+        """
+        payload = {
+            "details": [
+                {
+                    "id": self.detail_basic.id,
+                    "title": "",  # Invalid: required field
+                    "revisions": -1,  # Invalid: negative
+                    "delivery_time_in_days": None,  # Invalid: required
+                    "price": "free",  # Invalid type
+                    "features": "Logo",  # Invalid type: must be list
+                    "offer_type": "unknown"  # Invalid choice
+                }
+            ]
+        }
+
+        response = self.client.patch(self.url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_patch_unauthenticated_returns_401(self):
+        """
+        Ensures unauthenticated users get 401 response.
+        """
+        self.client.credentials()
+        payload = {"title": "Test"}
+        response = self.client.patch(self.url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_patch_not_owner_returns_403(self):
+        """
+        Ensures another authenticated user cannot modify this offer.
+        """
+        other_token = Token.objects.create(user=self.other_user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + other_token.key)
+
+        payload = {"title": "Hacked!"}
+        response = self.client.patch(self.url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_patch_nonexistent_offer_returns_404(self):
+        """
+        Ensures PATCH on invalid offer ID returns 404.
+        """
+        invalid_url = reverse('offer-detail', kwargs={'pk': 99999})
+        payload = {"title": "Nonexistent"}
+        response = self.client.patch(invalid_url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
