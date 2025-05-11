@@ -196,6 +196,28 @@ class OfferPatchTests(APITestCase):
         response = self.client.patch(self.url, data=payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_offer_type_cannot_be_changed(self):
+        """
+        Ensures that changing 'offer_type' in an existing detail returns 400.
+        """
+        payload = {
+            "details": [
+                {
+                    "id": self.detail_basic.id,
+                    "title": "Basic Design Updated",
+                    "revisions": 3,
+                    "delivery_time_in_days": 6,
+                    "price": 120,
+                    "features": ["Logo Design", "Flyer"],
+                    "offer_type": "standard"
+                }
+            ]
+        }
+
+        response = self.client.patch(self.url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("offer_type", str(response.data).lower())
+
     def test_detail_id_immutability(self):
         """
         Ensures that invalid or spoofed OfferDetail IDs are rejected.
@@ -267,4 +289,63 @@ class OfferPatchTests(APITestCase):
         invalid_url = reverse('offer-detail', kwargs={'pk': 99999})
         payload = {"title": "Nonexistent"}
         response = self.client.patch(invalid_url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+
+class OfferDeleteTests(APITestCase):
+    """
+    Test suite for DELETE /offers/<id>/ endpoint with authentication,
+    ownership permissions and error handling.
+    """
+
+    def setUp(self):
+        """
+        Sets up test users, token and a sample offer instance.
+        """
+        self.user = User.objects.create_user(username='john', password='pass')
+        self.other_user = User.objects.create_user(
+            username='hacker', password='pass')
+        self.token = Token.objects.create(user=self.user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)
+
+        self.offer = Offer.objects.create(
+            user=self.user,
+            title="Grafikdesign-Paket",
+            description="Originalbeschreibung"
+        )
+
+        self.url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
+
+    def test_delete_offer(self):
+        """
+        Tests that the owner can successfully delete their offer.
+        """
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Offer.objects.filter(id=self.offer.id).exists())
+
+    def test_delete_offer_unauthenticated_returns_401(self):
+        """
+        Ensures unauthenticated users cannot delete an offer.
+        """
+        self.client.credentials()  # Clear token
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_delete_offer_not_owner_returns_403(self):
+        """
+        Ensures users cannot delete offers they don't own.
+        """
+        other_token = Token.objects.create(user=self.other_user)
+        self.client.credentials(HTTP_AUTHORIZATION='Token ' + other_token.key)
+
+        response = self.client.delete(self.url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_nonexistent_offer_returns_404(self):
+        """
+        Ensures deleting a nonexistent offer returns 404.
+        """
+        invalid_url = reverse('offer-detail', kwargs={'pk': 99999})
+        response = self.client.delete(invalid_url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

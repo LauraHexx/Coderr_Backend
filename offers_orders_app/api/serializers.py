@@ -119,30 +119,40 @@ class OfferEditSerializer(serializers.ModelSerializer):
         """
         details_data = validated_data.pop('details', None)
 
-        # Update Offer-Felder
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
         if details_data is not None:
             existing_details = {
-                detail.id: detail for detail in instance.details.all()}
+                detail.id: detail for detail in instance.details.all()
+            }
 
             for detail_data in details_data:
-                print(detail_data)
                 detail_id = detail_data.get('id')
                 if not detail_id:
                     raise serializers.ValidationError(
-                        "Each detail must include its 'id' for updates.")
+                        "Each detail must include its 'id' for updates."
+                    )
 
                 if detail_id not in existing_details:
                     raise serializers.ValidationError(
-                        f"Detail with id {detail_id} not found for this offer.")
+                        f"Detail with id {detail_id} not found for this offer."
+                    )
 
                 detail_instance = existing_details[detail_id]
+
+                if "offer_type" in detail_data:
+                    current_type = detail_instance.offer_type
+                    new_type = detail_data.get("offer_type")
+                    if new_type != current_type:
+                        raise serializers.ValidationError(
+                            f"Changing 'offer_type' is not allowed for detail with id {detail_id}."
+                        )
+
                 for attr, value in detail_data.items():
-                    if attr in ("offer_type", "id"):
-                        continue  # offer_type darf nicht verändert werden
+                    if attr == "id":
+                        continue
                     setattr(detail_instance, attr, value)
                 detail_instance.save()
 
