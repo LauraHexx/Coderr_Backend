@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from reviews_app.models import Review
 from reviews_app.api.serializers import ReviewSerializer
 from utils.permission_utils import IsCustomerUser
+from .permissions import IsReviewer
 
 
 class ReviewListCreateAPIView(generics.ListCreateAPIView):
@@ -32,9 +33,8 @@ class ReviewListCreateAPIView(generics.ListCreateAPIView):
             queryset = queryset.filter(business_user_id=business_user_id)
         if reviewer_id:
             queryset = queryset.filter(reviewer_id=reviewer_id)
-        if ordering in ['updated_at', 'rating']:
+        if ordering in ['updated_at', 'rating', '-updated_at', '-rating']:
             queryset = queryset.order_by(ordering)
-
         return queryset
 
     def perform_create(self, serializer):
@@ -53,12 +53,3 @@ class ReviewRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         if self.request.method in ['PATCH', 'DELETE']:
             return [IsReviewer()]
         return super().get_permissions()
-
-
-class IsReviewer(permissions.BasePermission):
-    """
-    Custom permission to allow only the reviewer to edit or delete a review.
-    """
-
-    def has_object_permission(self, request, view, obj):
-        return obj.reviewer == request.user

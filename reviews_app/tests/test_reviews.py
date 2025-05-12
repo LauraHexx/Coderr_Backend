@@ -112,3 +112,70 @@ class ReviewListCreateTests(APITestCase):
         payload = ReviewTestHelper.get_valid_payload(self.business_user)
         response = self.client.post(self.list_url, payload)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+
+class ReviewRetrieveUpdateDestroyTests(APITestCase):
+    """
+    Tests for PATCH /reviews/{id}/ and DELETE /reviews/{id}/
+    """
+
+    def setUp(self):
+        """Set up test data for reviews."""
+        # Create users
+        self.business_user = TestHelper.create_user(
+            username="business_user", is_business=True)
+        self.reviewer = TestHelper.create_user(
+            username="reviewer", is_business=False)
+        self.other_user = TestHelper.create_user(
+            username="other_user", is_business=False)
+
+        # Create token and authenticate the reviewer
+        self.token = TestHelper.create_token(self.reviewer)
+        TestHelper.auth_client(self.client, self.token)
+
+        # Create a review
+        self.review = ReviewTestHelper.create_review(
+            business_user=self.business_user,
+            reviewer=self.reviewer,
+            rating=4,
+            description="Very professional service."
+        )
+
+        # URL for the review detail
+        self.detail_url = reverse(
+            'review-detail', kwargs={'pk': self.review.id})
+
+    def test_patch_review_success(self):
+        """Tests successful update of a review by the reviewer."""
+        payload = {"rating": 5, "description": "Updated review description."}
+        response = self.client.patch(self.detail_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.review.refresh_from_db()
+        self.assertEqual(self.review.rating, payload['rating'])
+        self.assertEqual(self.review.description, payload['description'])
+
+    def test_patch_review_not_allowed_for_non_owner(self):
+        """Tests that a non-owner cannot update a review."""
+        # Authenticate as another user
+        token = TestHelper.create_token(self.other_user)
+        TestHelper.auth_client(self.client, token)
+
+        payload = {"rating": 5, "description": "Unauthorized update attempt."}
+        response = self.client.patch(self.detail_url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_delete_review_success(self):
+        """Tests successful deletion of a review by the reviewer."""
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Review.objects.filter(id=self.review.id).exists())
+
+    def test_delete_review_not_allowed_for_non_owner(self):
+        """Tests that a non-owner cannot delete a review."""
+        # Authenticate as another user
+        token = TestHelper.create_token(self.other_user)
+        TestHelper.auth_client(self.client, token)
+
+        response = self.client.delete(self.detail_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertTrue(Review.objects.filter(id=self.review.id).exists())
