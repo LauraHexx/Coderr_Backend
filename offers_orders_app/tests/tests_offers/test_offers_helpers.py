@@ -1,8 +1,68 @@
+from django.contrib.auth.models import User
+from rest_framework.authtoken.models import Token
+from ...models import Offer, OfferDetail
+from users_auth_app.models import UserProfile
+
 
 class OfferTestHelper:
     """
     Helper class for reusable assertion methods in offer tests.
     """
+
+    @staticmethod
+    def create_user(username='john', password='pass', is_business=False):
+        """Creates and returns a user, optionally with a business profile."""
+        user = User.objects.create_user(username=username, password=password)
+        if is_business:
+            UserProfile.objects.create(user=user, type='business')
+        return user
+
+    @staticmethod
+    def create_token(user):
+        """Creates and returns a token for the given user."""
+        return Token.objects.create(user=user)
+
+    @staticmethod
+    def auth_client(client, token):
+        """Sets the auth header for a test client."""
+        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
+
+    @staticmethod
+    def create_offer(user, title="Grafikdesign-Paket", description="Originalbeschreibung"):
+        """Creates and returns an offer for the given user."""
+        return Offer.objects.create(user=user, title=title, description=description)
+
+    @staticmethod
+    def create_offer_details(offer):
+        """Creates all three OfferDetail variants for an offer."""
+        detail1 = OfferDetail.objects.create(
+            offer=offer,
+            title="Basic Design",
+            revisions=2,
+            delivery_time_in_days=5,
+            price=100.0,
+            features=["Logo"],
+            offer_type="basic"
+        )
+        detail2 = OfferDetail.objects.create(
+            offer=offer,
+            title="Standard Design",
+            revisions=5,
+            delivery_time_in_days=10,
+            price=120.0,
+            features=["Logo Design", "Visitenkarte", "Briefpapier"],
+            offer_type="standard"
+        )
+        detail3 = OfferDetail.objects.create(
+            offer=offer,
+            title="Premium Design",
+            revisions=10,
+            delivery_time_in_days=10,
+            price=150.0,
+            features=["Logo Design", "Visitenkarte", "Briefpapier", "Flyer"],
+            offer_type="premium"
+        )
+        return [detail1, detail2, detail3]
 
     @staticmethod
     def check_offer_fields(testcase, offers):

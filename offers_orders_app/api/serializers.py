@@ -10,16 +10,14 @@ from ..models import Offer, OfferDetail
 
 
 class UserDetailsSerializer(serializers.ModelSerializer):
-    """Serializer für die User-Daten (first_name, last_name, username)."""
     class Meta:
         model = get_user_model()
         fields = ['first_name', 'last_name', 'username']
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
-    """Serializer for offer detail objects."""
 
-    id = serializers.IntegerField()
+    id = serializers.IntegerField(required=False)
 
     class Meta:
         model = OfferDetail
@@ -43,7 +41,7 @@ class OfferDetailHyperlinkedSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class OfferListSerializer(serializers.ModelSerializer):
-    """Serializer für das Offer-Model."""
+
     user_details = UserDetailsSerializer(source="user", read_only=True)
     details = OfferDetailHyperlinkedSerializer(
         many=True, read_only=True)
@@ -66,7 +64,7 @@ class OfferListSerializer(serializers.ModelSerializer):
 
 
 class OfferRetrieveSerializer(OfferListSerializer, serializers.ModelSerializer):
-    """Serializer für das Offer-Model."""
+
     user_details = None
 
     class Meta:
@@ -76,7 +74,7 @@ class OfferRetrieveSerializer(OfferListSerializer, serializers.ModelSerializer):
 
 
 class OfferEditSerializer(serializers.ModelSerializer):
-    """Serializer für das Offer-Model."""
+
     details = OfferDetailSerializer(many=True, required=False)
 
     class Meta:
@@ -85,75 +83,96 @@ class OfferEditSerializer(serializers.ModelSerializer):
         read_only_fields = ['id']
 
     def validate_details(self, value):
-        """
-        Validates that if 'details' is provided, it must contain at least one valid entry.
-        """
+        """Validates presence, length, and type of offer details."""
+        self._validate_empty_details(value)
+        self._validate_minimum_details(value)
+        self._validate_offer_types(value)
+        return value
+
+    def _validate_empty_details(self, value):
+        """Ensures 'details' is not an empty list if provided."""
         if value is not None and len(value) == 0:
             raise serializers.ValidationError(
                 "If 'details' is provided, it must not be empty."
             )
 
+    def _validate_minimum_details(self, value):
+        """Ensures at least 3 details are present on POST request."""
+        if self.context['request'].method == 'POST' and len(value) < 3:
+            raise serializers.ValidationError(
+                "At least 3 offer details are required."
+            )
+
+    def _validate_offer_types(self, value):
+        """Ensures all detail offer types are valid."""
         valid_types = dict(OfferDetail.OFFER_TYPE_CHOICES).keys()
         offer_types = [detail.get("offer_type") for detail in value or []]
-
         invalid_types = set(offer_types) - set(valid_types)
         if invalid_types:
             raise serializers.ValidationError(
                 f"Invalid offer types: {', '.join(invalid_types)}"
             )
 
-        return value
-
     def create(self, validated_data):
-        """Creates an offer and its associated details."""
+        """Creates an offer with associated details."""
         details = validated_data.pop('details', [])
         offer = Offer.objects.create(**validated_data)
-        for detail in details:
-            OfferDetail.objects.create(offer=offer, **detail)
+        self._create_details(details, offer)
         return offer
 
-    def update(self, instance, validated_data):
-        """
-        Updates an offer and its existing offer details.
-        New details are not allowed. Only existing ones with an ID will be updated.
-        """
-        details_data = validated_data.pop('details', None)
+    def _create_details(self, details, offer):
+        """Creates related offer detail instances."""
+        for detail in details:
+            OfferDetail.objects.create(offer=offer, **detail)
 
+    def update(self, instance, validated_data):
+        """Updates offer and related details by ID."""
+        details_data = validated_data.pop('details', None)
+        self._update_offer_fields(instance, validated_data)
+        if details_data is not None:
+            self._update_offer_details(instance, details_data)
+        return instance
+
+    def _update_offer_fields(self, instance, validated_data):
+        """Updates basic fields of the offer."""
         for attr, value in validated_data.items():
             setattr(instance, attr, value)
         instance.save()
 
-        if details_data is not None:
-            existing_details = {
-                detail.id: detail for detail in instance.details.all()
-            }
+    def _update_offer_details(self, instance, details_data):
+        """Updates existing offer details only (by ID)."""
+        existing = {d.id: d for d in instance.details.all()}
+        for detail_data in details_data:
+            self._update_single_detail(detail_data, existing)
 
-            for detail_data in details_data:
-                detail_id = detail_data.get('id')
-                if not detail_id:
-                    raise serializers.ValidationError(
-                        "Each detail must include its 'id' for updates."
-                    )
+    def _update_single_detail(self, detail_data, existing_details):
+        """Updates a single detail if ID is present and valid."""
+        detail_id = detail_data.get('id')
+        if not detail_id:
+            raise serializers.ValidationError(
+                "Each detail must include its 'id' for updates."
+            )
+        if detail_id not in existing_details:
+            raise serializers.ValidationError(
+                f"Detail with id {detail_id} not found for this offer."
+            )
+        detail_instance = existing_details[detail_id]
+        self._validate_offer_type_unchanged(detail_instance, detail_data)
+        self._apply_detail_updates(detail_instance, detail_data)
 
-                if detail_id not in existing_details:
-                    raise serializers.ValidationError(
-                        f"Detail with id {detail_id} not found for this offer."
-                    )
+    def _validate_offer_type_unchanged(self, instance, detail_data):
+        """Prevents changes to 'offer_type' field."""
+        if "offer_type" in detail_data:
+            new_type = detail_data["offer_type"]
+            if new_type != instance.offer_type:
+                raise serializers.ValidationError(
+                    f"Changing 'offer_type' is not allowed for detail with id {instance.id}."
+                )
 
-                detail_instance = existing_details[detail_id]
-
-                if "offer_type" in detail_data:
-                    current_type = detail_instance.offer_type
-                    new_type = detail_data.get("offer_type")
-                    if new_type != current_type:
-                        raise serializers.ValidationError(
-                            f"Changing 'offer_type' is not allowed for detail with id {detail_id}."
-                        )
-
-                for attr, value in detail_data.items():
-                    if attr == "id":
-                        continue
-                    setattr(detail_instance, attr, value)
-                detail_instance.save()
-
-        return instance
+    def _apply_detail_updates(self, instance, detail_data):
+        """Applies field updates to a single detail instance."""
+        for attr, value in detail_data.items():
+            if attr == "id":
+                continue
+            setattr(instance, attr, value)
+        instance.save()

@@ -1,4 +1,4 @@
-from .test_helpers import OfferTestHelper
+from .test_offers_helpers import OfferTestHelper
 from users_auth_app.models import User
 from django.urls import reverse
 from rest_framework import status

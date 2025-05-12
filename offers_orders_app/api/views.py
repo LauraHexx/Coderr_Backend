@@ -58,7 +58,6 @@ class OfferViewSet(viewsets.ModelViewSet):
         """
         Updates the `updated_at` field.
         """
-        # Update `updated_at` only during updates
         serializer.save(updated_at=timezone.now())
 
 
