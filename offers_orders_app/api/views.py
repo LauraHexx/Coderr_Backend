@@ -4,9 +4,9 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
+from utils.permission_utils import IsBusinessUser, IsOwner
 from ..models import Offer, OfferDetail
 from .serializers import OfferDetailSerializer, OfferRetrieveSerializer, OfferListSerializer, OfferEditSerializer
-from utils.permission_utils import IsBusinessUser, IsOwner
 from .filters import OfferFilter
 from .pagination import OfferPagination
 

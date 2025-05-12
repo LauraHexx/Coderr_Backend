@@ -13,17 +13,14 @@ class ReviewListCreateTests(APITestCase):
 
     def setUp(self):
         """Set up test data for reviews."""
-        # Create users
         self.business_user = TestHelper.create_user(
             username="business_user", is_business=True)
         self.reviewer = TestHelper.create_user(
             username="reviewer", is_business=False)
 
-        # Create token and authenticate the client
         self.token = TestHelper.create_token(self.reviewer)
         TestHelper.auth_client(self.client, self.token)
 
-        # Create a review
         self.review = ReviewTestHelper.create_review(
             business_user=self.business_user,
             reviewer=self.reviewer,
@@ -31,18 +28,17 @@ class ReviewListCreateTests(APITestCase):
             description="Very professional service."
         )
 
-        # URL for listing and creating reviews
         self.list_url = reverse('review-list-create')
 
     def test_get_reviews_success(self):
         """Tests successful retrieval of reviews."""
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)  # There is one review
+        self.assertEqual(len(response.data), 1)
 
     def test_get_reviews_unauthenticated(self):
         """Tests that unauthenticated users cannot retrieve reviews."""
-        self.client.credentials()  # Remove authentication
+        self.client.credentials()
         response = self.client.get(self.list_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
@@ -101,7 +97,7 @@ class ReviewListCreateTests(APITestCase):
 
     def test_post_review_unauthenticated(self):
         """Tests that unauthenticated users cannot create reviews."""
-        self.client.credentials()  # Remove authentication
+        self.client.credentials()
         payload = ReviewTestHelper.get_valid_payload(
             self.business_user, description="Unauthenticated review.")
         response = self.client.post(self.list_url, payload)

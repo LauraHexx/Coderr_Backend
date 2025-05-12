@@ -1,13 +1,12 @@
-from .test_offers_helpers import OfferTestHelper
-from ...models import Offer
-from utils.test_utils import TestHelper
 from users_auth_app.models import User, UserProfile
-from rest_framework.authtoken.models import Token
-from django.urls import reverse
-from rest_framework import status
+from .test_offers_helpers import OfferTestHelper
+from utils.test_utils import TestHelper
+from ...models import Offer
 from rest_framework.test import APITestCase
+from rest_framework import status
+from django.urls import reverse
+from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
-
 User = get_user_model()
 
 

@@ -37,11 +37,7 @@ class OfferDetailHyperlinkedSerializer(serializers.HyperlinkedModelSerializer):
         return url.replace('/api', '', 1)
 
 
-#################### DIE OBEN LASSEN###############
-
-
 class OfferListSerializer(serializers.ModelSerializer):
-
     user_details = UserDetailsSerializer(source="user", read_only=True)
     details = OfferDetailHyperlinkedSerializer(
         many=True, read_only=True)
@@ -64,7 +60,6 @@ class OfferListSerializer(serializers.ModelSerializer):
 
 
 class OfferRetrieveSerializer(OfferListSerializer, serializers.ModelSerializer):
-
     user_details = None
 
     class Meta:
@@ -74,7 +69,6 @@ class OfferRetrieveSerializer(OfferListSerializer, serializers.ModelSerializer):
 
 
 class OfferEditSerializer(serializers.ModelSerializer):
-
     details = OfferDetailSerializer(many=True, required=False)
 
     class Meta:
