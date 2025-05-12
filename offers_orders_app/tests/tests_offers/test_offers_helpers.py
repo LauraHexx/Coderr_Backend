@@ -10,24 +10,6 @@ class OfferTestHelper:
     """
 
     @staticmethod
-    def create_user(username='john', password='pass', is_business=False):
-        """Creates and returns a user, optionally with a business profile."""
-        user = User.objects.create_user(username=username, password=password)
-        if is_business:
-            UserProfile.objects.create(user=user, type='business')
-        return user
-
-    @staticmethod
-    def create_token(user):
-        """Creates and returns a token for the given user."""
-        return Token.objects.create(user=user)
-
-    @staticmethod
-    def auth_client(client, token):
-        """Sets the auth header for a test client."""
-        client.credentials(HTTP_AUTHORIZATION='Token ' + token.key)
-
-    @staticmethod
     def create_offer(user, title="Grafikdesign-Paket", description="Originalbeschreibung"):
         """Creates and returns an offer for the given user."""
         return Offer.objects.create(user=user, title=title, description=description)

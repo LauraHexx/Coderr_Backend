@@ -1,5 +1,6 @@
 from .test_offers_helpers import OfferTestHelper
 from ...models import Offer
+from common.test_utils import TestHelper
 from users_auth_app.models import User, UserProfile
 from rest_framework.authtoken.models import Token
 from django.urls import reverse
@@ -14,10 +15,10 @@ class OfferCreateTests(APITestCase):
     """Tests for POST /api/offers/ endpoint with token auth and business-user check via UserProfile."""
 
     def setUp(self):
-        self.user = OfferTestHelper.create_user(
+        self.user = TestHelper.create_user(
             username='test', is_business=True)
-        self.token = OfferTestHelper.create_token(self.user)
-        OfferTestHelper.auth_client(self.client, self.token)
+        self.token = TestHelper.create_token(self.user)
+        TestHelper.auth_client(self.client, self.token)
         self.url = reverse('offer-list')
 
     def test_create_offer_successfully(self):
@@ -125,10 +126,10 @@ class OfferPatchTests(APITestCase):
     """
 
     def setUp(self):
-        self.user = OfferTestHelper.create_user()
-        self.other_user = OfferTestHelper.create_user(username='hacker')
-        self.token = OfferTestHelper.create_token(self.user)
-        OfferTestHelper.auth_client(self.client, self.token)
+        self.user = TestHelper.create_user()
+        self.other_user = TestHelper.create_user(username='hacker')
+        self.token = TestHelper.create_token(self.user)
+        TestHelper.auth_client(self.client, self.token)
 
         # Create an offer for the user
         self.offer = OfferTestHelper.create_offer(self.user)
@@ -265,10 +266,10 @@ class OfferDeleteTests(APITestCase):
     """
 
     def setUp(self):
-        self.user = OfferTestHelper.create_user()
-        self.other_user = OfferTestHelper.create_user(username='hacker')
-        self.token = OfferTestHelper.create_token(self.user)
-        OfferTestHelper.auth_client(self.client, self.token)
+        self.user = TestHelper.create_user()
+        self.other_user = TestHelper.create_user(username='hacker')
+        self.token = TestHelper.create_token(self.user)
+        TestHelper.auth_client(self.client, self.token)
 
         self.offer = OfferTestHelper.create_offer(self.user)
         self.url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
