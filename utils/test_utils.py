@@ -14,6 +14,8 @@ class TestHelper:
         user = User.objects.create_user(username=username, password=password)
         if is_business:
             UserProfile.objects.create(user=user, type='business')
+        else:
+            UserProfile.objects.create(user=user, type='customer')
         return user
 
     @staticmethod

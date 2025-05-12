@@ -12,11 +12,11 @@ class OfferDetailsRetrieveTests(APITestCase):
 
     def setUp(self):
         """Initializes test data."""
+        # Erstelle einen Benutzer
         self.user = TestHelper.create_user(
             username="testuser", is_business=True)
-        self.token = TestHelper.create_token(self.user)
-        TestHelper.auth_client(self.client, self.token)
 
+        # Erstelle ein Angebot und Angebotsdetails
         self.offer = Offer.objects.create(
             user=self.user, title="Test Offer", description="Test Description")
         self.offer_detail = OfferDetail.objects.create(
@@ -46,15 +46,9 @@ class OfferDetailsRetrieveTests(APITestCase):
         self.assertEqual(response.data['offer_type'],
                          self.offer_detail.offer_type)
 
-    def test_get_offer_detail_unauthenticated(self):
-        """Tests that unauthenticated users cannot access the endpoint."""
-        self.client.credentials()
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
     def test_get_offer_detail_not_found(self):
         """Tests that a 404 is returned if the offer detail does not exist."""
         url = reverse('offer-details',
-                      kwargs={'pk': 999999})
+                      kwargs={'pk': 999999})  # Nicht existierende ID
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

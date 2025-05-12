@@ -1,12 +1,12 @@
 from django.db.models import Min
 from rest_framework import viewsets, generics, filters
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
 from ..models import Offer, OfferDetail
 from .serializers import OfferDetailSerializer, OfferRetrieveSerializer, OfferListSerializer, OfferEditSerializer
-from .permissions import IsBusinessUser, IsOfferCreator
+from utils.permission_utils import IsBusinessUser, IsOwner
 from .filters import OfferFilter
 from .pagination import OfferPagination
 
@@ -30,7 +30,7 @@ class OfferViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return [IsAuthenticated(), IsBusinessUser()]
         if self.action in ['update', 'partial_update', 'destroy']:
-            return [IsAuthenticated(), IsOfferCreator()]
+            return [IsAuthenticated(), IsOwner()]
         return [IsAuthenticatedOrReadOnly()]
 
     def get_serializer_class(self):

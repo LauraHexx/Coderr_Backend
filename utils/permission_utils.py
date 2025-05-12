@@ -13,9 +13,20 @@ class IsBusinessUser(BasePermission):
         return profile is not None and profile.type == "business"
 
 
-class IsOfferCreator(BasePermission):
+class IsCustomerUser(BasePermission):
     """
-    Allows access only to the creator of the offer.
+    Allows access only to users of type 'customer'.
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        profile = getattr(user, "userprofile", None)
+        return profile is not None and profile.type == "customer"
+
+
+class IsOwner(BasePermission):
+    """
+    Allows access only to the creator.
     """
 
     def has_object_permission(self, request, view, obj):

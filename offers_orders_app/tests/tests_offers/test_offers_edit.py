@@ -1,6 +1,6 @@
 from .test_offers_helpers import OfferTestHelper
 from ...models import Offer
-from common.test_utils import TestHelper
+from utils.test_utils import TestHelper
 from users_auth_app.models import User, UserProfile
 from rest_framework.authtoken.models import Token
 from django.urls import reverse
