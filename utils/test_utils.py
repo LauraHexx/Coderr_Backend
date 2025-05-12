@@ -9,13 +9,15 @@ class TestHelper:
     """
 
     @staticmethod
-    def create_user(username='john', password='pass', is_business=False):
+    def create_user(username='john', password='pass', is_business=False, is_staff=False):
         """Creates and returns a user, optionally with a business profile."""
-        user = User.objects.create_user(username=username, password=password)
+        user = User.objects.create_user(
+            username=username, password=password, is_staff=is_staff)
         if is_business:
             UserProfile.objects.create(user=user, type='business')
         else:
             UserProfile.objects.create(user=user, type='customer')
+        print(user)
         return user
 
     @staticmethod

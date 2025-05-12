@@ -1,14 +1,18 @@
+from django.db import models
 from django.db.models import Min
 from rest_framework import viewsets, generics, filters
-from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated
+from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, IsAdminUser
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
-from utils.permission_utils import IsBusinessUser, IsOwner
-from ..models import Offer, OfferDetail
-from .serializers import OfferDetailSerializer, OfferRetrieveSerializer, OfferListSerializer, OfferEditSerializer
+from utils.permission_utils import IsBusinessUser, IsOwner, IsCustomerUser
+from ..models import Offer, OfferDetail, Order
+from .serializers import OfferDetailSerializer, OfferRetrieveSerializer, OfferListSerializer, OfferEditSerializer, OrderSerializer
 from .filters import OfferFilter
 from .pagination import OfferPagination
+
+############### OFFERS###############
 
 
 class OfferViewSet(viewsets.ModelViewSet):
@@ -68,3 +72,70 @@ class OfferDetailsRetrieveAPIView(generics.RetrieveAPIView):
     queryset = OfferDetail.objects.all()
     serializer_class = OfferDetailSerializer
     permission_classes = [IsAuthenticated]
+
+
+############### ORDERS###############
+
+class OrderListCreateAPIView(generics.ListCreateAPIView):
+    """
+    Handles GET /orders/ and POST /orders/
+    """
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        """
+        Dynamically assign permissions based on the HTTP method.
+        """
+        if self.request.method == 'POST':
+            return [IsAuthenticated(), IsCustomerUser()]
+        return super().get_permissions()
+
+    def get_queryset(self):
+        user = self.request.user
+        return Order.objects.filter(
+            models.Q(customer_user=user) | models.Q(business_user=user)
+        )
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        offer_detail_id = self.request.data.get('offer_detail_id')
+        try:
+            offer_detail = OfferDetail.objects.get(id=offer_detail_id)
+        except OfferDetail.DoesNotExist:
+            raise PermissionDenied(
+                "The specified offer detail does not exist.")
+
+        serializer.save(
+            customer_user=user,
+            business_user=offer_detail.offer.user,
+            offer_detail=offer_detail
+        )
+
+
+class OrderRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Handles GET /orders/{id}/, PATCH /orders/{id}/, and DELETE /orders/{id}/
+    """
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+
+    def get_permissions(self):
+        """
+        Dynamically assign permissions based on the HTTP method.
+        """
+        if self.request.method == 'PATCH':
+            return [IsAuthenticated(), IsBusinessUser()]
+        elif self.request.method == 'DELETE':
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
+
+
+class OrderDeleteAPIView(generics.DestroyAPIView):
+    """
+    Handles DELETE /orders/{id}/
+    """
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [IsAuthenticated, IsAdminUser]

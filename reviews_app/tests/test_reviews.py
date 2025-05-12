@@ -156,7 +156,6 @@ class ReviewRetrieveUpdateDestroyTests(APITestCase):
 
     def test_patch_review_not_allowed_for_non_owner(self):
         """Tests that a non-owner cannot update a review."""
-        # Authenticate as another user
         token = TestHelper.create_token(self.other_user)
         TestHelper.auth_client(self.client, token)
 
@@ -172,7 +171,6 @@ class ReviewRetrieveUpdateDestroyTests(APITestCase):
 
     def test_delete_review_not_allowed_for_non_owner(self):
         """Tests that a non-owner cannot delete a review."""
-        # Authenticate as another user
         token = TestHelper.create_token(self.other_user)
         TestHelper.auth_client(self.client, token)
 
