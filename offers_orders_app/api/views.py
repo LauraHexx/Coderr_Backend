@@ -1,10 +1,13 @@
 from django.db import models
 from django.db.models import Min
-from rest_framework import viewsets, generics, filters
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import viewsets, generics, filters, status
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, IsAdminUser
 from rest_framework.exceptions import ValidationError, NotFound
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
+from users_auth_app.models import User, UserProfile
 
 from utils.permission_utils import IsBusinessUser, IsOwner, IsCustomerUser
 from ..models import Offer, OfferDetail, Order
@@ -144,3 +147,63 @@ class OrderDeleteAPIView(generics.DestroyAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [IsAuthenticated, IsAdminUser]
+
+
+############### ORDER COUNT###############
+
+
+class OrderCountView(APIView):
+    """
+    Returns the count of in-progress orders for a specific business user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+        try:
+            # Check if the business user exists
+            if not User.objects.filter(id=business_user_id, userprofile__type='business').exists():
+                return Response(
+                    {"detail": "Business user not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            order_count = Order.objects.filter(
+                business_user_id=business_user_id,
+                status='in_progress'
+            ).count()
+
+            return Response({"order_count": order_count}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"detail": "An internal server error occurred."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+
+class CompletedOrderCountView(APIView):
+    """
+    Returns the count of completed orders for a specific business user.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, business_user_id):
+        try:
+            if not User.objects.filter(id=business_user_id, userprofile__type='business').exists():
+                return Response(
+                    {"detail": "Business user not found."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            completed_order_count = Order.objects.filter(
+                business_user_id=business_user_id,
+                status='completed'
+            ).count()
+
+            return Response({"completed_order_count": completed_order_count}, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response(
+                {"detail": "An internal server error occurred."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
