@@ -10,6 +10,10 @@ from offers_orders_app.models import Order
 
 
 class BaseInfoViewTests(APITestCase):
+    """
+    Test class for the BaseInfoView, which validates platform statistics such as 
+    review count, average rating, business profile count, and offer count.
+    """
 
     def setUp(self):
         """

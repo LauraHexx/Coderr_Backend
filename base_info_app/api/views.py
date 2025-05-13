@@ -14,37 +14,31 @@ class BaseInfoView(APIView):
     """
     permission_classes = [AllowAny]
 
+    def get_statistics(self):
+        """
+        Helper method to calculate platform statistics.
+        """
+        review_count = Review.objects.count()
+        average_rating = Review.objects.aggregate(
+            avg_rating=Avg('rating'))['avg_rating']
+        average_rating = round(average_rating, 1) if average_rating else 0.0
+        business_profile_count = UserProfile.objects.filter(
+            type='business').count()
+        offer_count = Offer.objects.count()
+
+        return {
+            "review_count": review_count,
+            "average_rating": average_rating,
+            "business_profile_count": business_profile_count,
+            "offer_count": offer_count,
+        }
+
     def get(self, request):
         try:
-            # Anzahl der Bewertungen
-            review_count = Review.objects.count()
-
-            # Durchschnittliche Bewertung (auf eine Dezimalstelle gerundet)
-            average_rating = Review.objects.aggregate(
-                avg_rating=Avg('rating'))['avg_rating']
-
-            average_rating = round(
-                average_rating, 1) if average_rating else 0.0
-
-            # Anzahl der Geschäftsnutzer
-            business_profile_count = UserProfile.objects.filter(
-                type='business').count()
-
-            # Anzahl der Angebote
-            offer_count = Offer.objects.count()
-
-            # Antwortdaten
-            data = {
-                "review_count": review_count,
-                "average_rating": average_rating,
-                "business_profile_count": business_profile_count,
-                "offer_count": offer_count,
-            }
-
+            data = self.get_statistics()
             return Response(data, status=status.HTTP_200_OK)
-
         except Exception as e:
-            print("DEBUG: Exception occurred:", str(e))  # Debugging-Ausgabe
+            print("DEBUG: Exception occurred:", str(e))
             return Response(
                 {"detail": "An internal server error occurred."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR

@@ -4,6 +4,12 @@ from ..models import Offer
 
 
 class OfferFilter(FilterSet):
+    """
+    A filter class for the Offer model, allowing filtering by:
+    - `creator_id`: Filters offers by the ID of the user who created them.
+    - `min_price`: Filters offers with a minimum price.
+    - `max_delivery_time`: Filters offers with a maximum delivery time in days.
+    """
     creator_id = NumberFilter(field_name='user__id')
     min_price = NumberFilter(method='filter_min_price')
     max_delivery_time = NumberFilter(method='filter_max_delivery_time')
