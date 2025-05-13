@@ -8,6 +8,7 @@ from users_auth_app.models import UserProfile
 
 
 class RegistrationSerializer(serializers.Serializer):
+    """Handles user registration, including validation for unique username and email, password matching, and user profile creation."""
     username = serializers.CharField(
         max_length=100,
         validators=[UniqueValidator(queryset=User.objects.all())]
@@ -80,6 +81,7 @@ class RegistrationSerializer(serializers.Serializer):
 
 
 class UserProfileDetailSerializer(serializers.ModelSerializer):
+    """Serializes detailed user profile data, including nested user fields and read-only metadata like creation date."""
     username = serializers.CharField(source='user.username', read_only=True)
     email = serializers.EmailField(source='user.email', required=False)
     first_name = serializers.CharField(
@@ -117,6 +119,7 @@ class UserProfileDetailSerializer(serializers.ModelSerializer):
 
 
 class BusinessUserProfileSerializer(serializers.ModelSerializer):
+    """Serializes business user profile data, including contact details, description, and working hours."""
     class Meta:
         model = UserProfile
         fields = ['user', 'username', 'first_name', 'last_name', 'file', 'location',
@@ -124,6 +127,7 @@ class BusinessUserProfileSerializer(serializers.ModelSerializer):
 
 
 class CustomerUserProfileSerializer(serializers.ModelSerializer):
+    """Serializes customer user profile data, including basic contact details and description."""
     class Meta:
         model = UserProfile
         fields = ['user', 'username', 'first_name', 'last_name', 'file',

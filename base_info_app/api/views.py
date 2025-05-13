@@ -34,6 +34,10 @@ class BaseInfoView(APIView):
         }
 
     def get(self, request):
+        """
+        Handles GET requests to retrieve platform statistics.
+        Returns a 200 response with the statistics or a 500 response in case of an error.
+        """
         try:
             data = self.get_statistics()
             return Response(data, status=status.HTTP_200_OK)

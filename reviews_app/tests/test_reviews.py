@@ -121,7 +121,7 @@ class ReviewRetrieveUpdateDestroyTests(APITestCase):
 
     def setUp(self):
         """Set up test data for reviews."""
-        # Create users
+
         self.business_user = TestHelper.create_user(
             username="business_user", is_business=True)
         self.reviewer = TestHelper.create_user(
@@ -129,11 +129,9 @@ class ReviewRetrieveUpdateDestroyTests(APITestCase):
         self.other_user = TestHelper.create_user(
             username="other_user", is_business=False)
 
-        # Create token and authenticate the reviewer
         self.token = TestHelper.create_token(self.reviewer)
         TestHelper.auth_client(self.client, self.token)
 
-        # Create a review
         self.review = ReviewTestHelper.create_review(
             business_user=self.business_user,
             reviewer=self.reviewer,
@@ -141,7 +139,6 @@ class ReviewRetrieveUpdateDestroyTests(APITestCase):
             description="Very professional service."
         )
 
-        # URL for the review detail
         self.detail_url = reverse(
             'review-detail', kwargs={'pk': self.review.id})
 

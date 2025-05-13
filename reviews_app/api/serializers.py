@@ -3,6 +3,9 @@ from reviews_app.models import Review
 
 
 class ReviewSerializer(serializers.ModelSerializer):
+    """
+    Serializes review data, including validation to ensure a reviewer can only review a business user once.
+    """
     class Meta:
         model = Review
         fields = ['id', 'business_user', 'reviewer', 'rating',

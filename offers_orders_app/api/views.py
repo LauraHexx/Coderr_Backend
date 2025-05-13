@@ -41,6 +41,9 @@ class OfferViewSet(viewsets.ModelViewSet):
         return [IsAuthenticatedOrReadOnly()]
 
     def get_serializer_class(self):
+        """
+        Returns the appropriate serializer class based on the action.
+        """
         if self.action == 'list':
             return OfferListSerializer
         if self.action == 'retrieve':
@@ -96,12 +99,19 @@ class OrderListCreateAPIView(generics.ListCreateAPIView):
         return super().get_permissions()
 
     def get_queryset(self):
+        """
+        Returns orders where the current user is either the customer or the business user.
+        """
         user = self.request.user
         return Order.objects.filter(
             models.Q(customer_user=user) | models.Q(business_user=user)
         )
 
     def perform_create(self, serializer):
+        """
+        Creates an order by associating the current user, the business user, and the specified offer detail.
+        Validates the presence and existence of the offer detail.
+        """
         user = self.request.user
         offer_detail_id = self.request.data.get('offer_detail_id')
 
@@ -159,8 +169,11 @@ class OrderCountView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, business_user_id):
+        """
+        Returns the count of in-progress orders for a specific business user.
+        Responds with 404 if the business user is not found.
+        """
         try:
-            # Check if the business user exists
             if not User.objects.filter(id=business_user_id, userprofile__type='business').exists():
                 return Response(
                     {"detail": "Business user not found."},
@@ -188,6 +201,10 @@ class CompletedOrderCountView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, business_user_id):
+        """
+        Returns the count of completed orders for a specific business user.
+        Responds with 404 if the business user is not found.
+        """
         try:
             if not User.objects.filter(id=business_user_id, userprofile__type='business').exists():
                 return Response(

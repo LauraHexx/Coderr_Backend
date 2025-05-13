@@ -24,6 +24,9 @@ class ReviewListCreateAPIView(generics.ListCreateAPIView):
         return super().get_permissions()
 
     def get_queryset(self):
+        """
+        Filters reviews based on query parameters like business_user_id, reviewer_id, and ordering.
+        """
         queryset = super().get_queryset()
         business_user_id = self.request.query_params.get('business_user_id')
         reviewer_id = self.request.query_params.get('reviewer_id')
@@ -38,6 +41,9 @@ class ReviewListCreateAPIView(generics.ListCreateAPIView):
         return queryset
 
     def perform_create(self, serializer):
+        """
+        Associates the currently authenticated user as the reviewer when creating a review.
+        """
         serializer.save(reviewer=self.request.user)
 
 
@@ -50,6 +56,10 @@ class ReviewRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
+        """
+        Assigns the IsReviewer permission for PATCH and DELETE requests.
+        Uses default permissions for other methods.
+        """
         if self.request.method in ['PATCH', 'DELETE']:
             return [IsReviewer()]
         return super().get_permissions()

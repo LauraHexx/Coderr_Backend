@@ -6,6 +6,10 @@ from rest_framework.authtoken.models import Token
 
 
 class LoginTests(APITestCase):
+    """
+    Test suite for the login endpoint, verifying successful login, token creation, and error handling for invalid credentials or input.
+    """
+
     def setUp(self):
         """
         Creates a test user and sets the login endpoint URL.

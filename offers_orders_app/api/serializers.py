@@ -11,12 +11,18 @@ from ..models import Offer, OfferDetail, Order
 ############### OFFERS###############
 
 class UserDetailsSerializer(serializers.ModelSerializer):
+    """
+    Serializes basic user details such as first name, last name, and username.
+    """
     class Meta:
         model = get_user_model()
         fields = ['first_name', 'last_name', 'username']
 
 
 class OfferDetailSerializer(serializers.ModelSerializer):
+    """
+    Serializes offer details including title, revisions, delivery time, price, features, and offer type.
+    """
 
     id = serializers.IntegerField(required=False)
 
@@ -27,6 +33,9 @@ class OfferDetailSerializer(serializers.ModelSerializer):
 
 
 class OfferDetailHyperlinkedSerializer(serializers.HyperlinkedModelSerializer):
+    """
+    Serializes offer details with a hyperlink to the detail view.
+    """
     url = serializers.SerializerMethodField()
 
     class Meta:
@@ -39,6 +48,9 @@ class OfferDetailHyperlinkedSerializer(serializers.HyperlinkedModelSerializer):
 
 
 class OfferListSerializer(serializers.ModelSerializer):
+    """
+    Serializes a list of offers with user details, associated offer details, and calculated minimum price and delivery time.
+    """
     user_details = UserDetailsSerializer(source="user", read_only=True)
     details = OfferDetailHyperlinkedSerializer(
         many=True, read_only=True)
@@ -61,6 +73,9 @@ class OfferListSerializer(serializers.ModelSerializer):
 
 
 class OfferRetrieveSerializer(OfferListSerializer, serializers.ModelSerializer):
+    """
+    Serializes a single offer for retrieval, excluding user details.
+    """
     user_details = None
 
     class Meta:
@@ -70,6 +85,9 @@ class OfferRetrieveSerializer(OfferListSerializer, serializers.ModelSerializer):
 
 
 class OfferEditSerializer(serializers.ModelSerializer):
+    """
+    Serializes offer data for creation or update, including validation for associated offer details.
+    """
     details = OfferDetailSerializer(many=True, required=False)
 
     class Meta:
@@ -176,6 +194,9 @@ class OfferEditSerializer(serializers.ModelSerializer):
 ############### ORDERS###############
 
 class OrderSerializer(serializers.ModelSerializer):
+    """
+    Serializes order data with details from the associated offer, including title, revisions, delivery time, and price.
+    """
     title = serializers.CharField(source='offer_detail.title', read_only=True)
     revisions = serializers.IntegerField(
         source='offer_detail.revisions', read_only=True)

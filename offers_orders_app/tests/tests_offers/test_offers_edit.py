@@ -14,6 +14,9 @@ class OfferCreateTests(APITestCase):
     """Tests for POST /api/offers/ endpoint with token auth and business-user check via UserProfile."""
 
     def setUp(self):
+        """
+        Sets up a business user, generates a token, and authenticates the client for testing.
+        """
         self.user = TestHelper.create_user(
             username='test', is_business=True)
         self.token = TestHelper.create_token(self.user)
@@ -125,18 +128,16 @@ class OfferPatchTests(APITestCase):
     """
 
     def setUp(self):
+        """
+        Sets up users, authenticates the client, creates an offer, and assigns offer details for testing.
+        """
         self.user = TestHelper.create_user()
         self.other_user = TestHelper.create_user(username='hacker')
         self.token = TestHelper.create_token(self.user)
         TestHelper.auth_client(self.client, self.token)
-
-        # Create an offer for the user
         self.offer = OfferTestHelper.create_offer(self.user)
-
-        # Create offer details and assign the first as `detail_basic`
         offer_details = OfferTestHelper.create_offer_details(self.offer)
         self.detail_basic = offer_details[0]  # First detail in the list
-
         self.url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
 
     def test_successful_patch(self):
@@ -265,6 +266,9 @@ class OfferDeleteTests(APITestCase):
     """
 
     def setUp(self):
+        """
+        Sets up users, authenticates the client, and creates an offer for testing.
+        """
         self.user = TestHelper.create_user()
         self.other_user = TestHelper.create_user(username='hacker')
         self.token = TestHelper.create_token(self.user)

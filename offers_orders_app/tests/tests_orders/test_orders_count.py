@@ -8,7 +8,16 @@ from offers_orders_app.tests.tests_orders.test_orders_helpers import OrdersTestH
 
 
 class OrderCountTests(APITestCase):
+    """
+    Test suite for endpoints that return the count of in-progress and completed orders
+    for a specific business user, including authentication and error handling.
+    """
+
     def setUp(self):
+        """
+        Sets up a business user, a customer user, authenticates the client, 
+        creates an offer with details, and initializes in-progress and completed orders for testing.
+        """
         self.business_user = TestHelper.create_user(
             username="business_user", is_business=True)
         self.customer_user = TestHelper.create_user(

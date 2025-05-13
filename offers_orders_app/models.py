@@ -45,6 +45,10 @@ class OfferDetail(models.Model):
 
 
 class Order(models.Model):
+    """
+    Represents an order placed by a customer for a specific offer detail.
+    Tracks the customer, business user, status, and timestamps.
+    """
     STATUS_CHOICES = [
         ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
