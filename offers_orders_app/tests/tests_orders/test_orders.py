@@ -90,10 +90,8 @@ class OrderTests(APITestCase):
 
     def test_post_order_invalid_user(self):
         """Tests that a non-customer user cannot create orders."""
-        # Authenticate as a business user
         token = TestHelper.create_token(self.business_user)
         TestHelper.auth_client(self.client, token)
-
         url = reverse('order-list-create')
         payload = {"offer_detail_id": self.offer_detail.id}
         response = self.client.post(url, payload, format='json')

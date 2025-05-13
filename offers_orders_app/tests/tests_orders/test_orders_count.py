@@ -9,24 +9,20 @@ from offers_orders_app.tests.tests_orders.test_orders_helpers import OrdersTestH
 
 class OrderCountTests(APITestCase):
     def setUp(self):
-        # Erstelle einen Business-User und einen Customer-User
         self.business_user = TestHelper.create_user(
             username="business_user", is_business=True)
         self.customer_user = TestHelper.create_user(
             username="customer_user", is_business=False)
 
-        # Authentifiziere den Customer-User
         self.token = TestHelper.create_token(self.customer_user)
         TestHelper.auth_client(self.client, self.token)
 
-        # Erstelle ein Offer und ein OfferDetail
         self.offer, self.offer_detail = OrdersTestHelper.create_offer_and_detail(
             user=self.business_user,
             title="Test Offer",
             detail_title="Test Offer Detail"
         )
 
-        # Erstelle Bestellungen
         self.in_progress_order = OrdersTestHelper.create_order(
             customer_user=self.customer_user,
             business_user=self.business_user,
@@ -40,7 +36,6 @@ class OrderCountTests(APITestCase):
             status="completed"
         )
 
-        # Nicht existierender Business-User für 404-Tests
         self.non_existent_business_user_id = 9999
 
     # -------------------- Tests für /order-count/{business_user_id}/ --------------------
@@ -54,7 +49,7 @@ class OrderCountTests(APITestCase):
 
     def test_order_count_unauthenticated(self):
         """Tests that unauthenticated users cannot access the endpoint."""
-        self.client.credentials()  # Entferne die Authentifizierung
+        self.client.credentials()
         url = reverse('order-count', args=[self.business_user.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -76,7 +71,7 @@ class OrderCountTests(APITestCase):
 
     def test_completed_order_count_unauthenticated(self):
         """Tests that unauthenticated users cannot access the endpoint."""
-        self.client.credentials()  # Entferne die Authentifizierung
+        self.client.credentials()
         url = reverse('completed-order-count', args=[self.business_user.id])
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
