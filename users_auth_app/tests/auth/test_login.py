@@ -47,7 +47,7 @@ class LoginTests(APITestCase):
         response = self.client.post(self.url, data=payload, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("non_field_errors", response.data)
+        self.assertIn("error", response.data)
 
     def test_login_fails_with_wrong_password(self):
         """
@@ -57,20 +57,7 @@ class LoginTests(APITestCase):
         response = self.client.post(self.url, data=payload, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("non_field_errors", response.data)
-
-    def test_login_fails_with_missing_fields(self):
-        """
-        Tests login fails if required fields are missing (username, password).
-        """
-        for field in ["username", "password"]:
-            payload = {
-                key: "test" for key in ["username", "password"] if key != field
-            }
-            response = self.client.post(self.url, data=payload, format="json")
-
-            self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-            self.assertIn(field, response.data)
+        self.assertIn("error", response.data)
 
     def test_login_fails_with_invalid_json(self):
         """

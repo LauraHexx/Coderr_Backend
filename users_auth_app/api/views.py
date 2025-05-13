@@ -1,7 +1,9 @@
 
+import datetime
 from django.http import Http404
 from django.shortcuts import get_object_or_404
-
+from django.contrib.auth.models import User
+from django.contrib.auth import authenticate
 from rest_framework import status
 from rest_framework.exceptions import ValidationError
 from rest_framework.views import APIView
@@ -42,29 +44,78 @@ class LoginView(ObtainAuthToken):
     """
     API view for authenticating users.
     Accepts POST requests with username and password,
-    and returns an authentication token on success.
+    and handles guest user registration if necessary.
     """
     permission_classes = [AllowAny]
 
     def post(self, request):
         """
-        Handles user login by validating the provided credentials and returning an authentication token.
-        Returns a success response with the token and user data, or errors if authentication fails.
+        Handles user login or guest user registration.
         """
-        serializer = self.serializer_class(
-            data=request.data, context={'request': request})
-        if serializer.is_valid():
-            user = serializer.validated_data["user"]
-            token, created = Token.objects.get_or_create(user=user)
-            data = {
-                "token": token.key,
-                "username": user.username,
-                "email": user.email,
-                "user_id": user.id
-            }
-            return Response(data, status=status.HTTP_200_OK)
+        username = request.data.get("username")
+        password = request.data.get("password")
+
+        if username in ["andrey", "kevin"]:
+            user = self._register_guest_user(username, password)
         else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            user = self._authenticate_user(username, password)
+            if not user:
+                return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
+
+        return self._generate_token_response(user)
+
+    def _register_guest_user(self, username, password):
+        """
+        Registers a guest user with a unique username and email.
+        """
+        unique_number = self._generate_unique_number()
+        new_username = f"{username}_{unique_number}"
+        new_email = f"guest{unique_number}@example.com"
+        profile_type = "customer" if username == "andrey" else "business"
+
+        user = User.objects.create_user(
+            username=new_username,
+            password=password,
+            email=new_email
+        )
+        self._create_user_profile(user, profile_type)
+        return user
+
+    def _authenticate_user(self, username, password):
+        """
+        Authenticates a regular user.
+        """
+        return authenticate(username=username, password=password)
+
+    def _generate_unique_number(self):
+        """
+        Generates a unique number based on the current time.
+        """
+        now = datetime.datetime.now()
+        return now.strftime("%H%M%S")
+
+    def _create_user_profile(self, user, profile_type):
+        """
+        Creates a user profile for the given user.
+        """
+        UserProfile.objects.create(
+            user=user,
+            type=profile_type,
+            description=f"Auto-generated profile for {profile_type} guest user."
+        )
+
+    def _generate_token_response(self, user):
+        """
+        Generates a token and response data for the user.
+        """
+        token, created = Token.objects.get_or_create(user=user)
+        data = {
+            "token": token.key,
+            "username": user.username,
+            "email": user.email,
+            "user_id": user.id
+        }
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class UserProfileDetailView(APIView):
