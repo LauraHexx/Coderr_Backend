@@ -1,3 +1,8 @@
+# Coderr Frontend
+
+version 02.05.25
+no own changes
+
 # Coderr Backend
 
 Coderr is a backend project built with Django, designed to manage users, offers, orders, reviews, and file uploads. This project provides APIs for handling business and customer interactions, including creating offers, managing orders, and submitting reviews.
