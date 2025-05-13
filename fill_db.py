@@ -4,6 +4,7 @@ from offers_orders_app.models import Offer, OfferDetail, Order
 from reviews_app.models import Review
 import random
 
+# Lösche alle bestehenden Daten
 User.objects.all().delete()
 UserProfile.objects.all().delete()
 Offer.objects.all().delete()
@@ -34,7 +35,7 @@ for i in range(1, 8):
         last_name="User",
         password="password123"
     )
-    profile = UserProfile.objects.create(
+    UserProfile.objects.create(
         user=user,
         type="business",
         location=f"City {i}",
@@ -45,7 +46,6 @@ for i in range(1, 8):
     Token.objects.create(user=user)
     business_users.append(user)
 
-
 customer_users = []
 for i in range(1, 8):
     user = User.objects.create_user(
@@ -55,7 +55,7 @@ for i in range(1, 8):
         last_name="User",
         password="password123"
     )
-    profile = UserProfile.objects.create(
+    UserProfile.objects.create(
         user=user,
         type="customer",
         tel=f"098765432{i}",
@@ -63,7 +63,6 @@ for i in range(1, 8):
     )
     Token.objects.create(user=user)
     customer_users.append(user)
-
 
 for business_user in business_users:
     offer_count = random.randint(2, 3)
@@ -73,9 +72,7 @@ for business_user in business_users:
             title=f"Offer {j + 1} by {business_user.username}",
             description=f"Description for offer {j + 1} by {business_user.username}"
         )
-
         offer_types = ["basic", "standard", "premium"]
-
         for k, offer_type in enumerate(offer_types):
             OfferDetail.objects.create(
                 offer=offer,
@@ -87,12 +84,10 @@ for business_user in business_users:
                 offer_type=offer_type
             )
 
-
 for business_user in business_users:
     review_count = random.randint(3, 4)
     for _ in range(review_count):
         reviewer = random.choice(customer_users)
-
         if not Review.objects.filter(business_user=business_user, reviewer=reviewer).exists():
             Review.objects.create(
                 business_user=business_user,
@@ -105,7 +100,6 @@ for customer_user in customer_users:
     review_count = random.randint(3, 4)
     for _ in range(review_count):
         business_user = random.choice(business_users)
-
         if not Review.objects.filter(business_user=business_user, reviewer=customer_user).exists():
             Review.objects.create(
                 business_user=business_user,
@@ -113,7 +107,6 @@ for customer_user in customer_users:
                 rating=random_rating(),
                 description=random_description()
             )
-
 
 for customer_user in customer_users:
     for _ in range(random.randint(2, 4)):
