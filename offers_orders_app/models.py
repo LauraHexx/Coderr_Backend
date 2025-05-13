@@ -49,7 +49,6 @@ class Order(models.Model):
         ('in_progress', 'In Progress'),
         ('completed', 'Completed'),
         ('cancelled', 'Cancelled'),
-
     ]
 
     customer_user = models.ForeignKey(

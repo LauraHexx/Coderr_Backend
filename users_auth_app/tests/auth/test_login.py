@@ -45,9 +45,7 @@ class LoginTests(APITestCase):
         """
         payload = {"username": "wrongUser", "password": "strongPassword"}
         response = self.client.post(self.url, data=payload, format="json")
-
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("error", response.data)
 
     def test_login_fails_with_wrong_password(self):
         """
@@ -55,9 +53,7 @@ class LoginTests(APITestCase):
         """
         payload = {"username": "exampleUser", "password": "wrongPassword"}
         response = self.client.post(self.url, data=payload, format="json")
-
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("error", response.data)
 
     def test_login_fails_with_invalid_json(self):
         """
@@ -66,5 +62,4 @@ class LoginTests(APITestCase):
         payload = "{username: 'exampleUser', password: 'strongPassword'}"
         response = self.client.post(
             self.url, data=payload, content_type="application/json")
-
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

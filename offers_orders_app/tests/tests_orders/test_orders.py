@@ -1,10 +1,9 @@
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
-from offers_orders_app.models import Order, OfferDetail
+from offers_orders_app.models import Order
 from utils.test_utils import TestHelper
 from .test_orders_helpers import OrdersTestHelper
-from ...models import Offer
 
 
 class OrderTests(APITestCase):

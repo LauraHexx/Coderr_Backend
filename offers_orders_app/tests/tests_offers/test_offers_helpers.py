@@ -1,7 +1,4 @@
-from django.contrib.auth.models import User
-from rest_framework.authtoken.models import Token
 from ...models import Offer, OfferDetail
-from users_auth_app.models import UserProfile
 
 
 class OfferTestHelper:

@@ -4,7 +4,6 @@ from django.db import models
 from django.urls import reverse
 
 from rest_framework import serializers
-from rest_framework import viewsets
 
 from ..models import Offer, OfferDetail, Order
 
