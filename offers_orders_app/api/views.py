@@ -38,6 +38,8 @@ class OfferViewSet(viewsets.ModelViewSet):
             return [IsAuthenticated(), IsBusinessUser()]
         if self.action in ['update', 'partial_update', 'destroy']:
             return [IsAuthenticated(), IsOwner()]
+        if self.action == 'retrieve':
+            return [IsAuthenticated()]
         return [IsAuthenticatedOrReadOnly()]
 
     def get_serializer_class(self):

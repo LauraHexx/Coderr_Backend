@@ -149,7 +149,6 @@ class OfferPatchTests(APITestCase):
             "description": "Ein umfassendes Grafikdesign-Paket für Unternehmen.",
             "details": [
                 {
-                    "id": self.detail_basic.id,
                     "title": "Basic Design Updated",
                     "revisions": 3,
                     "delivery_time_in_days": 6,

@@ -115,6 +115,7 @@ class OfferGetViewTests(APITestCase):
         Tests retrieving a single offer by ID.
         """
         detail_url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
+        self.client.force_authenticate(user=self.user)
         response = self.client.get(detail_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         OfferTestHelper.check_single_offer_fields(self, response.data)
@@ -124,5 +125,15 @@ class OfferGetViewTests(APITestCase):
         Tests the data types of a single offer.
         """
         detail_url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
+        self.client.force_authenticate(user=self.user)
         response = self.client.get(detail_url)
         OfferTestHelper.check_single_offer_data_types(self, response.data)
+
+    def test_get_single_offer_unauthenticated(self):
+        """
+        Tests that retrieving a single offer without authentication returns 401.
+        """
+        detail_url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
+        self.client.credentials()  # Remove authentication credentials
+        response = self.client.get(detail_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

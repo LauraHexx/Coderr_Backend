@@ -153,10 +153,64 @@ class OfferEditSerializer(serializers.ModelSerializer):
         instance.save()
 
     def _update_offer_details(self, instance, details_data):
-        """Updates existing offer details only (by ID)."""
-        existing = {d.id: d for d in instance.details.all()}
+        """
+        Updates existing offer details based on the `offer_type`.
+        """
+        existing_details = self._get_existing_details(instance)
+        valid_types = self._get_valid_offer_types()
+
         for detail_data in details_data:
-            self._update_single_detail(detail_data, existing)
+            self._validate_offer_type(detail_data, valid_types)
+            detail_instance = self._get_detail_instance(
+                existing_details, detail_data)
+            self._validate_detail_immutability(detail_instance, detail_data)
+            self._apply_detail_updates(detail_instance, detail_data)
+
+    def _get_existing_details(self, instance):
+        """
+        Retrieves existing details for the given offer instance.
+        """
+        return {d.offer_type: d for d in instance.details.all()}
+
+    def _get_valid_offer_types(self):
+        """
+        Retrieves valid offer types from the model's choices.
+        """
+        return dict(OfferDetail.OFFER_TYPE_CHOICES).keys()
+
+    def _validate_offer_type(self, detail_data, valid_types):
+        """
+        Validates that the `offer_type` is present and valid.
+        """
+        offer_type = detail_data.get('offer_type')
+        if not offer_type or offer_type not in valid_types:
+            raise serializers.ValidationError(
+                f"Invalid or missing 'offer_type': {offer_type}"
+            )
+
+    def _get_detail_instance(self, existing_details, detail_data):
+        """
+        Retrieves the detail instance based on the `offer_type`.
+        """
+        offer_type = detail_data['offer_type']
+        if offer_type not in existing_details:
+            raise serializers.ValidationError(
+                f"No existing detail found for 'offer_type': {offer_type}"
+            )
+        return existing_details[offer_type]
+
+    def _validate_detail_immutability(self, detail_instance, detail_data):
+        """
+        Validates that immutable fields like `id` and `offer_type` are not changed.
+        """
+        if 'id' in detail_data and detail_data['id'] != detail_instance.id:
+            raise serializers.ValidationError(
+                f"Changing 'id' is not allowed for detail with offer_type '{detail_instance.offer_type}'."
+            )
+        if 'offer_type' in detail_data and detail_data['offer_type'] != detail_instance.offer_type:
+            raise serializers.ValidationError(
+                f"Changing 'offer_type' is not allowed for detail with id {detail_instance.id}."
+            )
 
     def _update_single_detail(self, detail_data, existing_details):
         """Updates a single detail if ID is present and valid."""
@@ -183,15 +237,17 @@ class OfferEditSerializer(serializers.ModelSerializer):
                 )
 
     def _apply_detail_updates(self, instance, detail_data):
-        """Applies field updates to a single detail instance."""
+        """
+        Applies field updates to an existing detail instance.
+        """
         for attr, value in detail_data.items():
-            if attr == "id":
-                continue
+            if attr == "id" or attr == "offer_type":
+                continue  # Skip immutable fields
             setattr(instance, attr, value)
         instance.save()
 
-
 ############### ORDERS###############
+
 
 class OrderSerializer(serializers.ModelSerializer):
     """
