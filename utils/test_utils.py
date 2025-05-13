@@ -17,7 +17,6 @@ class TestHelper:
             UserProfile.objects.create(user=user, type='business')
         else:
             UserProfile.objects.create(user=user, type='customer')
-        print(user)
         return user
 
     @staticmethod

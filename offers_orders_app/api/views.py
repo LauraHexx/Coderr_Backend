@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Min
 from rest_framework import viewsets, generics, filters
 from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticated, IsAdminUser
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import ValidationError, NotFound
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
 
@@ -101,11 +101,16 @@ class OrderListCreateAPIView(generics.ListCreateAPIView):
     def perform_create(self, serializer):
         user = self.request.user
         offer_detail_id = self.request.data.get('offer_detail_id')
+
+        if not offer_detail_id:
+            raise ValidationError(
+                {"offer_detail_id": "This field is required."})
+
         try:
             offer_detail = OfferDetail.objects.get(id=offer_detail_id)
         except OfferDetail.DoesNotExist:
-            raise PermissionDenied(
-                "The specified offer detail does not exist.")
+            raise NotFound(
+                {"offer_detail_id": "The specified offer detail does not exist."})
 
         serializer.save(
             customer_user=user,

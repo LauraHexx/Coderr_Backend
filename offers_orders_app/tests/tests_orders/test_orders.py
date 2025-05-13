@@ -72,8 +72,7 @@ class OrderTests(APITestCase):
 
     def test_post_order_invalid_data(self):
         """Tests that invalid data returns a 400 Bad Request."""
-        # Stelle sicher, dass der Benutzer ein Kunde ist und authentifiziert ist
-        # Authentifiziere den Kunden
+        # Authentifiziere den Benutzer als Kunde
         TestHelper.auth_client(self.client, self.token)
 
         url = reverse('order-list-create')
@@ -102,12 +101,8 @@ class OrderTests(APITestCase):
 
     def test_post_order_invalid_offer_detail(self):
         """Tests that an order cannot be created with an invalid offer detail."""
-        # Stelle sicher, dass der Benutzer ein Kunde ist und authentifiziert ist
-        # Authentifiziere den Kunden
         TestHelper.auth_client(self.client, self.token)
-
         url = reverse('order-list-create')
-        # Nicht existierende offer_detail_id
         payload = {"offer_detail_id": 9999}
         response = self.client.post(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -116,10 +111,8 @@ class OrderTests(APITestCase):
 
     def test_patch_order_success(self):
         """Tests successful update of an order status by a business user."""
-        # Authenticate as the business user
         token = TestHelper.create_token(self.business_user)
         TestHelper.auth_client(self.client, token)
-
         url = reverse('order-detail', args=[self.order.id])
         payload = {"status": "completed"}
         response = self.client.patch(url, payload, format='json')
@@ -129,10 +122,8 @@ class OrderTests(APITestCase):
 
     def test_patch_order_invalid_status(self):
         """Tests that an invalid status returns a 400 Bad Request."""
-        # Authenticate as the business user
         token = TestHelper.create_token(self.business_user)
         TestHelper.auth_client(self.client, token)
-
         url = reverse('order-detail', args=[self.order.id])
         payload = {"status": "invalid_status"}
         response = self.client.patch(url, payload, format='json')
@@ -140,7 +131,7 @@ class OrderTests(APITestCase):
 
     def test_patch_order_unauthenticated(self):
         """Tests that unauthenticated users cannot update an order."""
-        self.client.credentials()  # Remove authentication
+        self.client.credentials()
         url = reverse('order-detail', args=[self.order.id])
         payload = {"status": "completed"}
         response = self.client.patch(url, payload, format='json')
@@ -155,11 +146,9 @@ class OrderTests(APITestCase):
 
     def test_patch_order_not_found(self):
         """Tests that updating a non-existent order returns a 404 Not Found."""
-        # Authenticate as the business user
         token = TestHelper.create_token(self.business_user)
         TestHelper.auth_client(self.client, token)
-
-        url = reverse('order-detail', args=[9999])  # Non-existent order ID
+        url = reverse('order-detail', args=[9999])
         payload = {"status": "completed"}
         response = self.client.patch(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -168,10 +157,8 @@ class OrderTests(APITestCase):
 
     def test_delete_order_success(self):
         """Tests successful deletion of an order by an admin user."""
-        # Authenticate as the admin user
         token = TestHelper.create_token(self.admin_user)
         TestHelper.auth_client(self.client, token)
-
         url = reverse('order-detail', args=[self.order.id])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
@@ -179,7 +166,7 @@ class OrderTests(APITestCase):
 
     def test_delete_order_unauthenticated(self):
         """Tests that unauthenticated users cannot delete an order."""
-        self.client.credentials()  # Remove authentication
+        self.client.credentials()
         url = reverse('order-detail', args=[self.order.id])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -192,10 +179,8 @@ class OrderTests(APITestCase):
 
     def test_delete_order_not_found(self):
         """Tests that deleting a non-existent order returns a 404 Not Found."""
-        # Authenticate as the admin user
         token = TestHelper.create_token(self.admin_user)
         TestHelper.auth_client(self.client, token)
-
-        url = reverse('order-detail', args=[9999])  # Non-existent order ID
+        url = reverse('order-detail', args=[9999])
         response = self.client.delete(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
