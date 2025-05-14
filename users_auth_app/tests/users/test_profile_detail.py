@@ -132,7 +132,7 @@ class ProfileDetailTests(APITestCase):
         """Tests updating profile with valid changes while ignoring read-only fields."""
         self._authenticate()
         updated_data = self._get_updated_data()
-        response = self.client.patch(self.url, updated_data)
+        response = self.client.patch(self.url, updated_data, format="json")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self._assert_patch_success(response, updated_data)
 

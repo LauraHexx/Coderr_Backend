@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly, IsAuthenticate
 from rest_framework.exceptions import ValidationError, NotFound
 from django_filters.rest_framework import DjangoFilterBackend
 from django.utils import timezone
-from users_auth_app.models import User, UserProfile
+from users_auth_app.models import User
 
 from utils.permission_utils import IsBusinessUser, IsOwner, IsCustomerUser
 from ..models import Offer, OfferDetail, Order
@@ -150,6 +150,12 @@ class OrderRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
         elif self.request.method == 'DELETE':
             return [IsAuthenticated(), IsAdminUser()]
         return [IsAuthenticated()]
+
+    def get_object(self):
+        try:
+            return super().get_object()
+        except Order.DoesNotExist:
+            raise NotFound(detail="Order not found.")
 
 
 class OrderDeleteAPIView(generics.DestroyAPIView):

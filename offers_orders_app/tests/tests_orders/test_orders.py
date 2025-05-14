@@ -66,6 +66,7 @@ class OrderTests(APITestCase):
         payload = {"offer_detail_id": self.offer_detail.id}
         response = self.client.post(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response['Content-Type'], 'application/json')
         self.assertEqual(Order.objects.count(), 2)
         OrdersTestHelper.check_order_fields(self, response.data)
 

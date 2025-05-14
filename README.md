@@ -35,6 +35,7 @@ Coderr is a backend project built with Django, designed to manage users, offers,
 
 ## Project Structure
 
+```
 backend/
 ├── base_info_app/ # Handles platform statistics
 ├── core/ # Core Django settings and configurations
@@ -43,6 +44,7 @@ backend/
 ├── upload_app/ # File upload functionality
 ├── users_auth_app/ # User authentication and profiles
 ├── utils/ # Utility functions and helpers
+```
 
 ## Installation
 
@@ -51,25 +53,38 @@ backend/
    ```bash
    git clone <https://github.com/LauraHexx/Coderr_Backend.git>
    cd backend
-
    ```
 
 2. **Set up a virtual environment**
+
+   ```bash
    python -m venv venv
    source venv/bin/activate # On Windows: venv\Scripts\activate
+   ```
 
 3. **Install dependencies**
+
+   ```bash
    pip install -r requirements.txt
+   ```
 
 4. **Apply migrations**
+
+   ```bash
    python manage.py makemigrations
    python manage.py migrate
+   ```
 
 5. **Create a superuser**
+
+   ```bash
    python manage.py createsuperuser
+   ```
 
 6. **Create a superuser**
+   ```bash
    python manage.py runserver
+   ```
 
 ## Development Workflow
 

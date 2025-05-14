@@ -80,7 +80,7 @@ class ReviewListCreateTests(APITestCase):
         new_business_user = TestHelper.create_user(
             username="new_business_user", is_business=True)
         payload = ReviewTestHelper.get_valid_payload(new_business_user)
-        response = self.client.post(self.list_url, payload)
+        response = self.client.post(self.list_url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Review.objects.count(), 2)
         self.assertEqual(response.data['rating'], payload['rating'])
@@ -90,7 +90,7 @@ class ReviewListCreateTests(APITestCase):
         """Tests that a reviewer cannot create multiple reviews for the same business user."""
         payload = ReviewTestHelper.get_valid_payload(
             self.business_user, description="Another review.")
-        response = self.client.post(self.list_url, payload)
+        response = self.client.post(self.list_url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("You can only review a business user once.",
                       str(response.data))

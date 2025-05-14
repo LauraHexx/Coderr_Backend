@@ -134,6 +134,6 @@ class OfferGetViewTests(APITestCase):
         Tests that retrieving a single offer without authentication returns 401.
         """
         detail_url = reverse('offer-detail', kwargs={'pk': self.offer.pk})
-        self.client.credentials()  # Remove authentication credentials
+        self.client.credentials()
         response = self.client.get(detail_url)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
