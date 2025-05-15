@@ -229,6 +229,28 @@ class OfferPatchTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response['Content-Type'], 'application/json')
 
+    def test_patch_missing_offer_type_returns_400(self):
+        """
+        Ensures that omitting 'offer_type' in a detail returns 400 and a helpful error message.
+        """
+        payload = {
+            "details": [
+                {
+                    "id": self.detail_basic.id,
+                    "title": "Basic Design Updated",
+                    "revisions": 3,
+                    "delivery_time_in_days": 6,
+                    "price": 120,
+                    "features": ["Logo Design", "Flyer"]
+                    # 'offer_type' fehlt absichtlich!
+                }
+            ]
+        }
+        response = self.client.patch(self.url, data=payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("Each detail must include 'offer_type'.",
+                      str(response.data))
+
     def test_patch_unauthenticated_returns_401(self):
         """
         Ensures unauthenticated users get 401 response.

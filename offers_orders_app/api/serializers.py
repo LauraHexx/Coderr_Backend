@@ -2,6 +2,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.urls import reverse
+from rest_framework.exceptions import ValidationError, NotFound
 
 from rest_framework import serializers
 
@@ -119,11 +120,17 @@ class OfferEditSerializer(serializers.ModelSerializer):
     def _validate_offer_types(self, value):
         """Ensures all detail offer types are valid."""
         valid_types = dict(OfferDetail.OFFER_TYPE_CHOICES).keys()
-        offer_types = [detail.get("offer_type") for detail in value or []]
+        offer_types = []
+        for detail in value or []:
+            offer_type = detail.get("offer_type")
+            if offer_type is None:
+                raise serializers.ValidationError(
+                    "Each detail must include 'offer_type'.")
+            offer_types.append(offer_type)
         invalid_types = set(offer_types) - set(valid_types)
         if invalid_types:
             raise serializers.ValidationError(
-                f"Invalid offer types: {', '.join(invalid_types)}"
+                f"Invalid offer types: {', '.join(str(t) for t in invalid_types)}"
             )
 
     def create(self, validated_data):

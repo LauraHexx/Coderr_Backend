@@ -80,6 +80,15 @@ class OrderTests(APITestCase):
         response = self.client.post(url, payload, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
+    def test_post_order_offer_detail_id_not_integer(self):
+        """Tests that an order cannot be created if offer_detail_id is not an integer."""
+        TestHelper.auth_client(self.client, self.token)
+        url = reverse('order-list-create')
+        payload = {"offer_detail_id": "notanint"}
+        response = self.client.post(url, payload, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("A valid integer is required", str(response.data))
+
     def test_post_order_unauthenticated(self):
         """Tests that unauthenticated users cannot create orders."""
         self.client.credentials()  # Remove authentication

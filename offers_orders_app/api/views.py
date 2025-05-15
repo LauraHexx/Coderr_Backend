@@ -14,6 +14,7 @@ from ..models import Offer, OfferDetail, Order
 from .serializers import OfferDetailSerializer, OfferRetrieveSerializer, OfferListSerializer, OfferEditSerializer, OrderSerializer
 from .filters import OfferFilter
 from .pagination import OfferPagination
+from .permissions import IsOrderBusinessOwner
 
 ############### OFFERS###############
 
@@ -111,27 +112,50 @@ class OrderListCreateAPIView(generics.ListCreateAPIView):
 
     def perform_create(self, serializer):
         """
-        Creates an order by associating the current user, the business user, and the specified offer detail.
-        Validates the presence and existence of the offer detail.
+        Handles order creation and associates the correct users and offer detail.
+        Validates the offer_detail_id from the request.
         """
         user = self.request.user
-        offer_detail_id = self.request.data.get('offer_detail_id')
-
-        if not offer_detail_id:
-            raise ValidationError(
-                {"offer_detail_id": "This field is required."})
-
-        try:
-            offer_detail = OfferDetail.objects.get(id=offer_detail_id)
-        except OfferDetail.DoesNotExist:
-            raise NotFound(
-                {"offer_detail_id": "The specified offer detail does not exist."})
-
+        offer_detail_id = self._get_offer_detail_id()
+        offer_detail = self._get_offer_detail(offer_detail_id)
         serializer.save(
             customer_user=user,
             business_user=offer_detail.offer.user,
             offer_detail=offer_detail
         )
+
+    def _get_offer_detail_id(self):
+        """
+        Retrieves and validates the offer_detail_id from the request data.
+        Raises a ValidationError if missing or invalid.
+        """
+        offer_detail_id = self.request.data.get('offer_detail_id')
+        if not offer_detail_id:
+            raise ValidationError(
+                {"offer_detail_id": "This field is required."})
+        return self._validate_offer_detail_id_int(offer_detail_id)
+
+    def _validate_offer_detail_id_int(self, offer_detail_id):
+        """
+        Ensures offer_detail_id is an integer.
+        Raises a ValidationError if not.
+        """
+        try:
+            return int(offer_detail_id)
+        except (TypeError, ValueError):
+            raise ValidationError(
+                {"offer_detail_id": "A valid integer is required."})
+
+    def _get_offer_detail(self, offer_detail_id_int):
+        """
+        Retrieves the OfferDetail object by ID.
+        Raises NotFound if the object does not exist.
+        """
+        try:
+            return OfferDetail.objects.get(id=offer_detail_id_int)
+        except OfferDetail.DoesNotExist:
+            raise NotFound(
+                {"offer_detail_id": "The specified offer detail does not exist."})
 
 
 class OrderRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
@@ -141,21 +165,25 @@ class OrderRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
 
-    def get_permissions(self):
-        """
-        Dynamically assign permissions based on the HTTP method.
-        """
-        if self.request.method == 'PATCH':
-            return [IsAuthenticated(), IsBusinessUser()]
-        elif self.request.method == 'DELETE':
-            return [IsAuthenticated(), IsAdminUser()]
-        return [IsAuthenticated()]
-
     def get_object(self):
+        """
+        Returns the order object or raises 404 if not found.
+        """
         try:
             return super().get_object()
         except Order.DoesNotExist:
             raise NotFound(detail="Order not found.")
+
+    def get_permissions(self):
+        """
+        Dynamically assign permissions based on the HTTP method.
+        Always checks object existence before permissions.
+        """
+        if self.request.method == 'PATCH':
+            return [IsAuthenticated(), IsBusinessUser(), IsOrderBusinessOwner()]
+        elif self.request.method == 'DELETE':
+            return [IsAuthenticated(), IsAdminUser()]
+        return [IsAuthenticated()]
 
 
 class OrderDeleteAPIView(generics.DestroyAPIView):
