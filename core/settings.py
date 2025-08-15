@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-(&a$)67_@g_q7xfc@92a_hk4nes3!*f$rpg_bg^!#jeo(p0zrh
 DEBUG = True
 
 ALLOWED_HOSTS = ['34.118.98.193',
-                 'coderr.laura-hesidenz.de', '.laura-hesidenz.de']
+                 'coderr.laura-hesidenz.de', '.laura-hesidenz.de', '127.0.0.1',]
 
 
 # Application definition
@@ -138,6 +138,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5500",
+    "http://127.0.0.1:8000",
     "http://coderr.laura-hesidenz.de",
     "https://coderr.laura-hesidenz.de"
 ]
