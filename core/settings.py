@@ -28,7 +28,8 @@ SECRET_KEY = 'django-insecure-(&a$)67_@g_q7xfc@92a_hk4nes3!*f$rpg_bg^!#jeo(p0zrh
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['34.118.98.193', 'coderr.laura-hesidenz.de']
+ALLOWED_HOSTS = ['34.118.98.193',
+                 'coderr.laura-hesidenz.de', '.laura-hesidenz.de']
 
 
 # Application definition
@@ -52,6 +53,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -59,7 +61,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
 ]
 
 ROOT_URLCONF = 'core.urls'
